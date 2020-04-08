@@ -45,6 +45,11 @@ namespace koromo_copy_backend
                 Console.Error.WriteLine($"[{tuple.Item1.ToString(en)}] {tuple.Item2}");
             });
 
+            AppDomain.CurrentDomain.UnhandledException += (s, e) =>
+            {
+                Logs.Instance.PushError("unhandled: " + (e.ExceptionObject as Exception).ToString());
+            };
+
             try
             {
                 Command.Start(args);
