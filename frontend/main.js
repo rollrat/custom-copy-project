@@ -4,19 +4,21 @@
 
 const { app, BrowserWindow } = require("electron");
 const client = require("./client.js");
-
+ 
 function createWindow() {
   let win = new BrowserWindow({
     width: 800,
     height: 600,
+    frame: false,
     webPreferences: {
       nodeIntegration: true,
     },
   });
 
   win.loadFile("index.html");
+  win.setMenu(null);
 
-  win.webContents.openDevTools();
+  //win.webContents.openDevTools();
 }
 
 app.whenReady().then(createWindow);

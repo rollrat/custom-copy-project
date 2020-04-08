@@ -101,7 +101,7 @@ namespace koromo_copy_backend.Component.Hitomi
             int m = metadata_collection.Count;
             for (int i = 0; i < m; i++)
             {
-                string lang = "n/a"; ;
+                string lang = "n/a";
                 if (metadata_collection[i].Language >= 0) lang = index.Languages[metadata_collection[i].Language];
                 if (Settings.Instance.Model.Language != "all" &&
                     Settings.Instance.Model.Language != lang)

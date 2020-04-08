@@ -21,6 +21,7 @@
     "electron-builder": "^22.4.1"
   },
   "dependencies": {
+    "custom-electron-titlebar": "^3.2.2-hotfix62",
     "fs": "0.0.1-security",
     "react": "^16.13.1",
     "ws": "^7.2.3"

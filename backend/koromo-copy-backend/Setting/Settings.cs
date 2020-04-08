@@ -85,7 +85,7 @@ namespace koromo_copy_backend.Setting
                     ThreadCount = Environment.ProcessorCount,
                     PostprocessorThreadCount = 3,
                     SuperPath = AppProvider.DefaultSuperPath,
-                    ConnectionAddress = "ws://localhost:45852/",
+                    ConnectionAddress = "ws://127.0.0.1:45852/",
 
                     NetworkSettings = new SettingModel.NetworkSetting
                     {
@@ -159,7 +159,7 @@ namespace koromo_copy_backend.Setting
             if (string.IsNullOrWhiteSpace(Model.SuperPath))
                 Model.SuperPath = AppProvider.DefaultSuperPath;
             if (string.IsNullOrWhiteSpace(Model.ConnectionAddress))
-                Model.ConnectionAddress = "ws://localhost:45852/";
+                Model.ConnectionAddress = "ws://127.0.0.1:45852/";
 
             if (Model.NetworkSettings == null)
             {

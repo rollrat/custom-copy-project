@@ -219,6 +219,83 @@ namespace koromo_copy_backend
         }
     }
 
+    public class SingleFileProgressBar : ProgressBase, IDisposable
+    {
+        private const int blockCount = 20;
+        private double currentProgress = 0;
+        private long total_read_bytes = 0;
+        private long current_speed = 0;
+        private long tick_speed = 0;
+        private object report_lock = new object();
+        private Queue<long> speed_save = new Queue<long>();
+
+        public SingleFileProgressBar()
+            : base()
+        {
+        }
+
+        public void Report(long size, long read_bytes)
+        {
+            var value = Math.Max(0, Math.Min(1, total_read_bytes / (double)size));
+            Interlocked.Exchange(ref currentProgress, value);
+            lock (report_lock)
+            {
+                total_read_bytes += read_bytes;
+                current_speed += read_bytes;
+                tick_speed += read_bytes;
+            }
+        }
+
+        protected override void TimerHandler(object state)
+        {
+            lock (timer)
+            {
+                if (disposed) return;
+                double cs = 0;
+                lock (report_lock)
+                {
+                    speed_save.Enqueue(tick_speed);
+                    tick_speed = 0;
+                    cs = current_speed * (8 / (double)speed_save.Count);
+                    if (speed_save.Count >= 8)
+                    {
+                        current_speed -= speed_save.Peek();
+                        speed_save.Dequeue();
+                    }
+                }
+
+                int progressBlockCount = (int)(currentProgress * blockCount);
+                int percent = (int)(currentProgress * 100);
+
+                string speed;
+                if (cs > 1024 * 1024)
+                    speed = (cs / (1024 * 1024)).ToString("#,0.0") + " MB/S";
+                else if (cs > 1024)
+                    speed = (cs / 1024).ToString("#,0.0") + " KB/S";
+                else
+                    speed = cs.ToString("#,0") + " Byte/S";
+
+                string downloads;
+                if (total_read_bytes > 1024 * 1024 * 1024)
+                    downloads = (total_read_bytes / (double)(1024 * 1024 * 1024)).ToString("#,0.0") + " GB";
+                else if (total_read_bytes > 1024 * 1024)
+                    downloads = (total_read_bytes / (double)(1024 * 1024)).ToString("#,0.0") + " MB";
+                else if (total_read_bytes > 1024)
+                    downloads = (total_read_bytes / (double)(1024)).ToString("#,0.0") + " KB";
+                else
+                    downloads = (total_read_bytes).ToString("#,0") + " Byte";
+
+                string text = string.Format("[{0}{1}] {2,3}% ({3} {4})",
+                    new string('#', progressBlockCount), new string('-', blockCount - progressBlockCount),
+                    percent,
+                    speed, downloads);
+                UpdateText(text);
+
+                ResetTimer();
+            }
+        }
+    }
+
     public class WaitPostprocessor : ProgressBase, IDisposable
     {
         private long wait;

@@ -8,13 +8,7 @@ const { app, dialog } = require("electron");
 
 if (!fs.existsSync("settings.json"))
 {
-  dialog.showMessageBoxSync(null, {
-    title: "Koromo Copy",
-    type: "error",
-    message:
-      "Setting file not found!\nPlease run koromo-copy-server before running koromo-copy-frontend-client-ui!"
-  });
-  app.quit();
+  process.exit();
 }
 
 let settings_json = fs.readFileSync("settings.json");

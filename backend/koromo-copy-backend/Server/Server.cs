@@ -193,6 +193,10 @@ namespace koromo_copy_backend.Server
     public class Protocol
     {
         public long Index;
+
+        // Is this message client side request?
+        // or server side event?
+        public bool IsRequest;
         public string Type;
         public object Data;
     }

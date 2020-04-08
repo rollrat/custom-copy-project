@@ -2,14 +2,17 @@
 // Copyright (C) 2020. rollrat. Licensed under the MIT Licence.
 
 using koromo_copy_backend.CL;
+using koromo_copy_backend.Component.Hitomi;
 using koromo_copy_backend.Extractor;
 using koromo_copy_backend.Log;
+using koromo_copy_backend.Network;
 using koromo_copy_backend.Setting;
 using koromo_copy_backend.Utils;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using System.Text;
 using System.Threading;
@@ -244,6 +247,7 @@ namespace koromo_copy_backend
 
         static void ProcessStartsWithClient()
         {
+            Console.Clear();
             Console.Title = "Koromo Copy Server";
 
             Console.WriteLine(@" _  __                                                _____                         ");
@@ -261,7 +265,39 @@ namespace koromo_copy_backend
             Console.WriteLine($"Version: {Version.Text} (Build: {Internals.GetBuildDate().ToLongDateString()})");
             Console.WriteLine("");
 
+            // Check Required Datas
+
+            if (!HitomiData.Instance.CheckMetadataExist())
+            {
+                const string index_metadata_url = @"https://github.com/rollrat/koromo-copy-project/releases/download/database/index-metadata.compress";
+                const string original_title_url = @"https://github.com/rollrat/koromo-copy-project/releases/download/database/origin-title.compress";
+
+                Logs.Instance.Push("Welcome to Koromo Copy!\r\n\tDownload the necessary data before running the program!");
+
+                var file1 = download_data(index_metadata_url, "index-metadata.compress");
+                Logs.Instance.Push("Unzip to index-metadata.json...");
+                File.WriteAllBytes("index-metadata.json", file1.UnzipByte());
+
+                var file2 = download_data(original_title_url, "original-title.compress");
+                Logs.Instance.Push("Unzip to original-title.json...");
+                File.WriteAllBytes("original-title.json", file2.UnzipByte());
+            }
+
+            Logs.Instance.Push("Load index-metdata.json...");
+            HitomiData.Instance.Load();
+            HitomiData.Instance.OptimizeMetadata();
+            HitomiData.Instance.RebuildTagData();
+            GC.Collect(GC.MaxGeneration, GCCollectionMode.Forced);
+
+            // Check Server Update
+            Logs.Instance.Push("Checking koromo-copy-backend-server version...");
+            // Check Client Update
+            Logs.Instance.Push("Checking koromo-copy-client-ui version...");
+
+            // Start Server
             Server.Server.Instance.Start();
+
+            // Start Client
 
             while (true)
             {
@@ -269,6 +305,26 @@ namespace koromo_copy_backend
             }
         }
 
+        static byte[] download_data(string url, string filename)
+        {
+            Logs.Instance.Push($"Download {filename}...");
+            var task = NetTask.MakeDefault(url);
+
+            SingleFileProgressBar pb = null;
+            long tsz = 0;
+            task.SizeCallback = (sz) =>
+            {
+                Console.Write("Downloading ... ");
+                pb = new SingleFileProgressBar();
+                pb.Report(sz, 0);
+                tsz = sz;
+            };
+            task.DownloadCallback = (sz) => pb.Report(tsz, sz);
+            var ret = NetTools.DownloadData(task);
+            pb.Dispose();
+            Console.WriteLine("Complete!");
+            return ret;
+        }
 
         static void ProcessExtract(string url, string[] args, string[] PathFormat, bool ExtractInformation, bool ExtractLinks, bool PrintProcess, bool DisableDownloadProgress)
         {
