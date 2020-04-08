@@ -6,6 +6,17 @@ const fs = require("fs");
 const WebSocket = require("ws");
 const { app, dialog } = require("electron");
 
+if (!fs.existsSync("settings.json"))
+{
+  dialog.showMessageBoxSync(null, {
+    title: "Koromo Copy",
+    type: "error",
+    message:
+      "Setting file not found!\nPlease run koromo-copy-server before running koromo-copy-frontend-client-ui!"
+  });
+  app.quit();
+}
+
 let settings_json = fs.readFileSync("settings.json");
 let settings = JSON.parse(settings_json);
 

@@ -6,6 +6,7 @@ using koromo_copy_backend.Crypto;
 using koromo_copy_backend.Log;
 using koromo_copy_backend.Setting;
 using koromo_copy_backend.Utils;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Net;
@@ -61,6 +62,8 @@ namespace koromo_copy_backend.Server
             }
         }
 
+        Dictionary<string, WebSocket> wsd = new Dictionary<string, WebSocket>();
+
         private async void ProcessRequest(HttpListenerContext listenerContext)
         {
             WebSocketContext webSocketContext = null;
@@ -87,10 +90,11 @@ namespace koromo_copy_backend.Server
 
             WebSocket webSocket = webSocketContext.WebSocket;
 
+            wsd.Add(sign, webSocket);
+
             try
             {
-                byte[] receiveBuffer = new byte[1024];
-                var ping = Encoding.UTF8.GetBytes("ping");
+                byte[] receiveBuffer = new byte[65535];
 
                 while (webSocket.State == WebSocketState.Open)
                 {
@@ -112,6 +116,8 @@ namespace koromo_copy_backend.Server
                     {
                         //await webSocket.SendAsync(new ArraySegment<byte>(receiveBuffer, 0, receiveResult.Count), WebSocketMessageType.Binary, receiveResult.EndOfMessage, CancellationToken.None);
                     }
+
+                    Array.Clear(receiveBuffer, 0, receiveBuffer.Length);
                 }
             }
             catch (Exception e)
@@ -124,6 +130,22 @@ namespace koromo_copy_backend.Server
                     webSocket.Dispose();
                 Interlocked.Decrement(ref count);
             }
+        }
+
+        private async Task send(WebSocket ws, string msg, bool endofmsg)
+        {
+            var mm = Encoding.UTF8.GetBytes(msg);
+            await ws.SendAsync(new ArraySegment<byte>(mm, 0, mm.Length), WebSocketMessageType.Text, endofmsg, CancellationToken.None);
+        }
+
+        public async Task SendMessage(string sign, string msg)
+        {
+            await send(wsd[sign], msg, true);
+        }
+
+        public async Task SendMessage(string sign, Protocol data)
+        {
+            await send(wsd[sign], JsonConvert.SerializeObject(data, Formatting.None), true);
         }
 
         private async Task process_msg(WebSocket ws, string sign, string msg, bool endofmsg)
@@ -154,7 +176,25 @@ namespace koromo_copy_backend.Server
                 }
                 Logs.Instance.Push($"Ping-pong test ends - {sign}\r\n\tTotal: {total_ticks.ToString("#,#")} ticks, Avg: {((double)total_ticks / 1000).ToString("#,#.#")} ticks, Ping: {((double)(total_ticks / 1000) / (TimeSpan.TicksPerMillisecond / 1000)).ToString("#,#.#")} ms");
             }
+            else
+            {
+                try
+                {
+                    var data = JsonConvert.DeserializeObject<Protocol>(msg);
+                }
+                catch (Exception e)
+                {
+                    Logs.Instance.PushError($"Message processing error from: {sign}\r\n{e}");
+                }
+            }
         }
+    }
+
+    public class Protocol
+    {
+        public long Index;
+        public string Type;
+        public object Data;
     }
 
     public class Server : ILazy<Server>
