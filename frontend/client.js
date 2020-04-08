@@ -25,4 +25,13 @@ ws.on("error", (err) => {
   app.quit();
 });
 
+ws.on("open", function open() {
+  ws.send("hello");
+});
+
+ws.on("message", (msg) => {
+  if (msg == "ping")
+    ws.send("pong");
+});
+
 module.exports.ws = ws;
