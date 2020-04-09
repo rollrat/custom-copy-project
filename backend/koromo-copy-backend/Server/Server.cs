@@ -55,7 +55,7 @@ namespace koromo_copy_backend.Server
                         listenerContext.Response.ContentType = "text/html";
                         listenerContext.Response.OutputStream.Write(res, 0, res.Length);
                         listenerContext.Response.Close();
-                        Logs.Instance.PushError("Do not connect with a web browser!");
+                        Logs.Instance.PushError("Sorry, http web server is currently not support!");
                     }
                     catch { }
                 }
