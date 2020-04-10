@@ -7,6 +7,7 @@ using Jint.Constraints;
 using Jint.Native;
 using Jint.Runtime.Interop;
 using koromo_copy_backend.Crypto;
+using koromo_copy_backend.Html;
 using koromo_copy_backend.Network;
 using koromo_copy_backend.Utils;
 using System;
@@ -73,6 +74,7 @@ namespace koromo_copy_backend.Script
             public string text { get { return node.MyText(); } }
 
             public string attr(string what) { return node.GetAttributeValue(what, ""); }
+            public string[] cal(string pattern) => HtmlCAL.Calculate(pattern, node).ToArray();
         }
 
         public class _Version
