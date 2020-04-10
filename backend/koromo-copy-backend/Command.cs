@@ -6,6 +6,7 @@ using koromo_copy_backend.Component.Hitomi;
 using koromo_copy_backend.Extractor;
 using koromo_copy_backend.Log;
 using koromo_copy_backend.Network;
+using koromo_copy_backend.Script;
 using koromo_copy_backend.Setting;
 using koromo_copy_backend.Utils;
 using System;
@@ -293,6 +294,10 @@ namespace koromo_copy_backend
             Logs.Instance.Push("Checking koromo-copy-backend-server version...");
             // Check Client Update
             Logs.Instance.Push("Checking koromo-copy-client-ui version...");
+
+            // Load Scripts
+            Logs.Instance.Push("Loading scripts...");
+            ScriptManager.Instance.Initialization();
 
             // Start Server
             Server.Server.Instance.Start();

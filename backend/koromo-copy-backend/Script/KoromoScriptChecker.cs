@@ -7,7 +7,7 @@ using System.Text;
 
 namespace koromo_copy_backend.Script
 {
-    public class KoromoScript
+    class KoromoScriptChecker
     {
     }
 }
