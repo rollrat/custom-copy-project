@@ -135,17 +135,21 @@ namespace koromo_copy_backend.Server
         private async Task send(WebSocket ws, string msg, bool endofmsg)
         {
             var mm = Encoding.UTF8.GetBytes(msg);
+            Logs.Instance.Push("Send to: " + ws.SubProtocol + "\r\n\tMessage: " + msg);
             await ws.SendAsync(new ArraySegment<byte>(mm, 0, mm.Length), WebSocketMessageType.Text, endofmsg, CancellationToken.None);
         }
 
         public async Task SendMessage(string sign, string msg)
         {
+            Logs.Instance.Push("Send to: " + sign + "\r\n\tMessage: " + msg);
             await send(wsd[sign], msg, true);
         }
 
         public async Task SendMessage(string sign, Protocol data)
         {
-            await send(wsd[sign], JsonConvert.SerializeObject(data, Formatting.None), true);
+            var msg = JsonConvert.SerializeObject(data, Formatting.None);
+            Logs.Instance.Push("Send to " + sign + "\r\n\tMessage: " + msg);
+            await send(wsd[sign], msg, true);
         }
 
         private async Task process_msg(WebSocket ws, string sign, string msg, bool endofmsg)
