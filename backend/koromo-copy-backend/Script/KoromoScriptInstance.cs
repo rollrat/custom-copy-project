@@ -26,13 +26,25 @@ namespace koromo_copy_backend.Script
     /// </summary>
     public class KoromoScriptInstance
     {
-        public class _Network
-        {
-            public static string get_string(string address) =>
-                NetTools.DownloadString(address);
-            public static _Html get_html(string address) =>
-                new _Html(NetTools.DownloadString(address));
-        }
+        //public class _Network
+        //{
+        //    public static string get_string(string address) =>
+        //        NetTools.DownloadString(address);
+        //    public static _Html get_html(string address) =>
+        //        new _Html(NetTools.DownloadString(address));
+        //    public static _Task get_task(string address, object attr) =>
+        //        new _Task(address, attr);
+
+        //    public class _Task
+        //    {
+        //        NetTask _task;
+        //        public _Task(string url, object attr)
+        //        {
+        //            var x = attr.ToString();
+        //            //task = NetTask.MakeDefault(url);
+        //        }
+        //    }
+        //}
 
         public class _Url
         {
@@ -95,21 +107,32 @@ namespace koromo_copy_backend.Script
             { this.name = name; this.version = version; this.author = author; this.id = id; }
         }
 
-        public class _File
-        {
-            public static string read(string filename)
-            {
-                if (filename.Contains('/') || filename.Contains('\\'))
-                    throw new Exception("Prohibited operation executed.");
-                return File.ReadAllText("script/" + filename);
-            }
+        //public class _File
+        //{
+        //    public static string read(string filename)
+        //    {
+        //        if (filename.Contains('/') || filename.Contains('\\'))
+        //            throw new Exception("Prohibited operation executed.");
+        //        return File.ReadAllText("script/" + filename);
+        //    }
 
-            public static void write(string filename, string content)
-            {
-                if (filename.Contains('/') || filename.Contains('\\') || filename.Contains(".js"))
-                    throw new Exception("Prohibited operation executed.");
-                File.WriteAllText("script/" + filename, content);
-            }
+        //    public static void write(string filename, string content)
+        //    {
+        //        if (filename.Contains('/') || filename.Contains('\\') || filename.Contains(".js"))
+        //            throw new Exception("Prohibited operation executed.");
+        //        File.WriteAllText("script/" + filename, content);
+        //    }
+        //}
+
+        public class _Native
+        {
+            public static _Html create_html_node(string html) => _Html.to_node(html);
+            public static string get_string(string url) =>
+                NetTools.DownloadString(url);
+            public static _Html get_html(string url) =>
+                new _Html(NetTools.DownloadString(url));
+            public static _Url create_url(string url) =>
+                new _Url(url);
         }
 
         static bool init = false;
@@ -127,10 +150,7 @@ namespace koromo_copy_backend.Script
             configure();
             var engine = JsEngineSwitcher.Current.CreateEngine(ChakraCoreJsEngine.EngineName);
 
-            engine.EmbedHostType("net", typeof(_Network));
-            engine.EmbedHostType("url", typeof(_Url));
-            engine.EmbedHostType("html", typeof(_Html));
-            engine.EmbedHostType("file", typeof(_File));
+            engine.EmbedHostType("_native", typeof(_Native));
 
             return new KoromoScriptInstance(engine);
         }
@@ -142,26 +162,40 @@ namespace koromo_copy_backend.Script
         {
             this.engine = engine;
 
-            engine.EmbedHostObject("debug", new Action<object>(debug));
-            engine.EmbedHostObject("info", new Action<object>(push));
-            engine.EmbedHostObject("error", new Action<object>(push_error));
-            engine.EmbedHostObject("warning", new Action<object>(push_warning));
-            engine.EmbedHostObject("register", new Action<string, string, string, string>(register));
+            engine.EmbedHostObject("_debug", new Action<object>(debug));
+            engine.EmbedHostObject("_info", new Action<object>(push));
+            engine.EmbedHostObject("_error", new Action<object>(push_error));
+            engine.EmbedHostObject("_warning", new Action<object>(push_warning));
+            engine.EmbedHostObject("_register", new Action<string, string, string, string>(register));
         }
 
         public void Load(string js)
         {
             try
             {
+#if DEBUG
+                engine.ExecuteFile("../../../../scripts/support.js");
+                //engine.Execute(File.ReadAllText("../../../../scripts/support.js") + "\r\n" + File.ReadAllText(js));
+#else
+                engine.ExecuteFile("scripts/support.js");
+#endif
                 engine.ExecuteFile(js);
+            }
+            catch (JsEngineException e)
+            {
+                Log.Logs.Instance.PushError($"[Script Loader] An engine-error occurred while loading the script.\r\n" + e.Message);
+            }
+            catch (JsCompilationException e)
+            {
+                Log.Logs.Instance.PushError($"[Script Loader] An compile-error occurred while loading the script.\r\n" + e.Message);
             }
             catch (JsRuntimeException e)
             {
-                Log.Logs.Instance.PushError($"[Script-{Version.id}] An error occurred while loading the script.\r\n" + e.Message);
+                Log.Logs.Instance.PushError($"[Script Loader] An runtime-error occurred while loading the script.\r\n" + e.Message);
             }
             catch (Exception e)
             {
-                Log.Logs.Instance.PushError($"[Script-{Version.id}] " + e);
+                Log.Logs.Instance.PushError($"[Script Loader] " + e);
             }
         }
 
@@ -171,9 +205,17 @@ namespace koromo_copy_backend.Script
             {
                 return engine.CallFunction(jsv, pp);
             }
+            catch (JsEngineException e)
+            {
+                Log.Logs.Instance.PushError($"[Script-{Version.id}] An engine-error occurred while running the script.\r\n" + e.Message);
+            }
+            catch (JsCompilationException e)
+            {
+                Log.Logs.Instance.PushError($"[Script-{Version.id}] An compile-error occurred while running the script.\r\n" + e.Message);
+            }
             catch (JsRuntimeException e)
             {
-                Log.Logs.Instance.PushError($"[Script-{Version.id}] An error occurred while running the script.\r\n" + e.Message);
+                Log.Logs.Instance.PushError($"[Script-{Version.id}] An runtime-error occurred while running the script.\r\n" + e.Message);
             }
             catch (Exception e)
             {

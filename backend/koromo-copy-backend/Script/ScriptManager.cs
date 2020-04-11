@@ -14,6 +14,8 @@ namespace koromo_copy_backend.Script
     {
         public List<KoromoScriptInstance> Script { get; set; }
 
+        public KoromoScriptInstance CommonEnvironment { get; set; }
+
         public void Initialization()
         {
             var script_dir = Path.Combine(AppProvider.ApplicationPath, "script");
@@ -24,6 +26,7 @@ namespace koromo_copy_backend.Script
             }
 
             Script = new List<KoromoScriptInstance>();
+            //var CommonEnvironment = KoromoScriptInstance.CreateNewInstance();
             foreach (var file in Directory.GetFiles(script_dir).Where(x => x.EndsWith(".js")))
             {
                 var instance = KoromoScriptInstance.CreateNewInstance();

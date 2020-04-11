@@ -19,8 +19,6 @@
     <PackageReference Include="JavaScriptEngineSwitcher.ChakraCore.Native.win-x86" Version="3.4.5" />
     <PackageReference Include="JavaScriptEngineSwitcher.Core" Version="3.3.0" />
     <PackageReference Include="MessagePack" Version="2.1.90" />
-    <PackageReference Include="Microsoft.CodeAnalysis.Common" Version="3.5.0" />
-    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="3.5.0" />
     <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
     <PackageReference Include="SixLabors.ImageSharp" Version="1.0.0-beta0007" />
     <PackageReference Include="sqlite-net-pcl" Version="1.6.292" />
