@@ -2,14 +2,13 @@
 // Copyright (C) 2020. rollrat. Licensed under the MIT Licence.
 
 using HtmlAgilityPack;
-using Jint;
-using Jint.Constraints;
-using Jint.Native;
-using Jint.Runtime.Interop;
+using JavaScriptEngineSwitcher.ChakraCore;
+using JavaScriptEngineSwitcher.Core;
 using koromo_copy_backend.Crypto;
 using koromo_copy_backend.Html;
 using koromo_copy_backend.Network;
 using koromo_copy_backend.Utils;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -65,8 +64,16 @@ namespace koromo_copy_backend.Script
             public _Html(HtmlNode node) { this.node = node; }
             public static _Html to_node(string html) => new _Html(html);
 
-            public _Html select_single(string path) { return new _Html(node.SelectSingleNode(path)); }
-            public _Html[] select(string path) { return node.SelectNodes(path).Select(x => new _Html(x)).ToArray(); }
+            public _Html select_single(string path) {
+                var result = node.SelectSingleNode(path);
+                if (result == null) return null;
+                return new _Html(result);
+            }
+            public _Html[] select(string path) {
+                var result = node.SelectNodes(path);
+                if (result == null) return null;
+                return result.Select(x => new _Html(x)).ToArray(); 
+            }
 
             public string inner_text { get { return node.InnerText; } }
             public string inner_html { get { return node.InnerHtml; } }
@@ -105,48 +112,73 @@ namespace koromo_copy_backend.Script
             }
         }
 
+        static bool init = false;
+        static void configure()
+        {
+            if (init) return;
+            init = true;
+            var engineSwitcher = JsEngineSwitcher.Current;
+            engineSwitcher.EngineFactories.Add(new ChakraCoreJsEngineFactory());
+            engineSwitcher.DefaultEngineName = ChakraCoreJsEngine.EngineName;
+        }
+
         public static KoromoScriptInstance CreateNewInstance()
         {
-            var token = new CancellationToken();
-            var constraint = new CancellationConstraint(token);
-            var engine = new Engine(options =>
-            {
-                options.LimitMemory(1024 * 1024 * 10); // 10 MB
-                options.LimitRecursion(1);
-                options.Constraint(constraint);
-            });
+            configure();
+            var engine = JsEngineSwitcher.Current.CreateEngine(ChakraCoreJsEngine.EngineName);
 
-            engine.SetValue("net", TypeReference.CreateTypeReference(engine, typeof(_Network)));
-            engine.SetValue("url", TypeReference.CreateTypeReference(engine, typeof(_Url)));
-            engine.SetValue("html", TypeReference.CreateTypeReference(engine, typeof(_Html)));
-            engine.SetValue("file", TypeReference.CreateTypeReference(engine, typeof(_File)));
+            engine.EmbedHostType("net", typeof(_Network));
+            engine.EmbedHostType("url", typeof(_Url));
+            engine.EmbedHostType("html", typeof(_Html));
+            engine.EmbedHostType("file", typeof(_File));
 
-            return new KoromoScriptInstance(engine, constraint);
+            return new KoromoScriptInstance(engine);
         }
 
         public _Version Version { get; private set; }
-        Engine engine;
-        CancellationConstraint constraint;
+        IJsEngine engine;
 
-        KoromoScriptInstance(Engine engine, CancellationConstraint constraint)
+        KoromoScriptInstance(IJsEngine engine)
         {
             this.engine = engine;
-            this.constraint = constraint;
 
-            engine.SetValue("debug", new Action<object>(debug));
-            engine.SetValue("info", new Action<object>(push));
-            engine.SetValue("error", new Action<object>(push_error));
-            engine.SetValue("warning", new Action<object>(push_warning));
-            engine.SetValue("register", new Action<string,string,string,string>(register));
+            engine.EmbedHostObject("debug", new Action<object>(debug));
+            engine.EmbedHostObject("info", new Action<object>(push));
+            engine.EmbedHostObject("error", new Action<object>(push_error));
+            engine.EmbedHostObject("warning", new Action<object>(push_warning));
+            engine.EmbedHostObject("register", new Action<string, string, string, string>(register));
         }
 
-        public void Load(string js) => engine.Execute(js);
-        public object Invoke(JsValue jsv, params object[] pp) => engine.Invoke(jsv, pp);
+        public void Load(string js)
+        {
+            try
+            {
+                engine.Execute(js);
+            }
+            catch (Exception e)
+            {
+                Log.Logs.Instance.PushError($"[Script-{Version.id}] " + e);
+            }
+        }
+
+        public object Invoke(string jsv, params object[] pp)
+        {
+            try
+            {
+                return engine.CallFunction(jsv, pp);
+            }
+            catch (Exception e)
+            {
+                Log.Logs.Instance.PushError($"[Script-{Version.id}] " + e);
+            }
+
+            return null;
+        }
 
         void register(string name, string author, string version, string id) 
         {
-            Version = new _Version(name, author, version, id); 
-            engine.SetValue("version", Version); 
+            Version = new _Version(name, author, version, id);
+            //engine.SetVariableValue("version", Version);
         }
 
         #region Logging
@@ -172,7 +204,7 @@ namespace koromo_copy_backend.Script
                 {
                     Log.Logs.Instance.Push($"[Script/unknown] " + (obj as string));
                     Log.Logs.Instance.PushWarning("Execute the register function before call the message output function.\r\n\t" +
-                        "If you do not meet the script specifications, registration may be cancelled.");
+                        "If you do not write the script specifications, registration may be cancelled.");
                 }
             else
                 Log.Logs.Instance.Push(obj);
@@ -186,7 +218,7 @@ namespace koromo_copy_backend.Script
                 {
                     Log.Logs.Instance.PushError($"[Script/unknown] " + (obj as string));
                     Log.Logs.Instance.PushWarning("Execute the register function before call the message output function.\r\n\t" +
-                        "If you do not meet the script specifications, registration may be cancelled.");
+                        "If you do not write the script specifications, registration may be cancelled.");
                 }
             else
                 Log.Logs.Instance.PushError(obj);
@@ -200,7 +232,7 @@ namespace koromo_copy_backend.Script
                 {
                     Log.Logs.Instance.PushWarning($"[Script/unknown] " + (obj as string));
                     Log.Logs.Instance.PushWarning("Execute the register function before call the message output function.\r\n\t" +
-                        "If you do not meet the script specifications, registration may be cancelled.");
+                        "If you do not write the script specifications, registration may be cancelled.");
                 }
             else
                 Log.Logs.Instance.PushWarning(obj);

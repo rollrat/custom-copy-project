@@ -11,7 +11,13 @@
     <PackageReference Include="Discord.Net" Version="2.1.1" />
     <PackageReference Include="Esprima" Version="1.0.1270" />
     <PackageReference Include="HtmlAgilityPack" Version="1.11.23" />
-    <PackageReference Include="Jint" Version="3.0.0-beta-1767" />
+    <PackageReference Include="JavaScriptEngineSwitcher.ChakraCore" Version="3.4.5" />
+    <PackageReference Include="JavaScriptEngineSwitcher.ChakraCore.Native.linux-x64" Version="3.4.5" />
+    <PackageReference Include="JavaScriptEngineSwitcher.ChakraCore.Native.osx-x64" Version="3.4.5" />
+    <PackageReference Include="JavaScriptEngineSwitcher.ChakraCore.Native.win-arm" Version="3.4.5" />
+    <PackageReference Include="JavaScriptEngineSwitcher.ChakraCore.Native.win-x64" Version="3.4.5" />
+    <PackageReference Include="JavaScriptEngineSwitcher.ChakraCore.Native.win-x86" Version="3.4.5" />
+    <PackageReference Include="JavaScriptEngineSwitcher.Core" Version="3.3.0" />
     <PackageReference Include="MessagePack" Version="2.1.90" />
     <PackageReference Include="Microsoft.CodeAnalysis.Common" Version="3.5.0" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="3.5.0" />
