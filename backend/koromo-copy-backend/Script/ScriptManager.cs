@@ -27,7 +27,7 @@ namespace koromo_copy_backend.Script
             foreach (var file in Directory.GetFiles(script_dir).Where(x => x.EndsWith(".js")))
             {
                 var instance = KoromoScriptInstance.CreateNewInstance();
-                instance.Load(File.ReadAllText(file));
+                instance.Load(file);
                 Script.Add(instance);
             }
         }

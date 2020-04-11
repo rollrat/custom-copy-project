@@ -153,7 +153,11 @@ namespace koromo_copy_backend.Script
         {
             try
             {
-                engine.Execute(js);
+                engine.ExecuteFile(js);
+            }
+            catch (JsRuntimeException e)
+            {
+                Log.Logs.Instance.PushError($"[Script-{Version.id}] An error occurred while loading the script.\r\n" + e.Message);
             }
             catch (Exception e)
             {
@@ -167,6 +171,10 @@ namespace koromo_copy_backend.Script
             {
                 return engine.CallFunction(jsv, pp);
             }
+            catch (JsRuntimeException e)
+            {
+                Log.Logs.Instance.PushError($"[Script-{Version.id}] An error occurred while running the script.\r\n" + e.Message);
+            }
             catch (Exception e)
             {
                 Log.Logs.Instance.PushError($"[Script-{Version.id}] " + e);
@@ -178,7 +186,7 @@ namespace koromo_copy_backend.Script
         void register(string name, string author, string version, string id) 
         {
             Version = new _Version(name, author, version, id);
-            //engine.SetVariableValue("version", Version);
+            engine.EmbedHostObject("version", Version);
         }
 
         #region Logging
