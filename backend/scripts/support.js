@@ -19,7 +19,10 @@ function register(name, author, version, id) {
  * @param  {object} msg
  */
 function info(msg) {
-  _info(msg);
+  if (typeof msg === 'string')
+    _info(msg);
+  else
+    _info(JSON.stringify(msg,null,4));
 }
 
 /**
@@ -27,7 +30,10 @@ function info(msg) {
  * @param  {object} msg
  */
 function error(msg) {
-  _error(msg);
+  if (typeof msg === 'string')
+    _error(msg);
+  else
+    _error(JSON.stringify(msg,null,4));
 }
 
 /**
@@ -35,7 +41,10 @@ function error(msg) {
  * @param  {object} msg
  */
 function warning(msg) {
-  _warning(msg);
+  if (typeof msg === 'string')
+    _warning(msg);
+  else
+    _warning(JSON.stringify(msg,null,4));
 }
 
 /**
@@ -43,7 +52,42 @@ function warning(msg) {
  * @param  {object} msg
  */
 function debug(msg) {
-  _debug(msg);
+  if (typeof msg === 'string')
+    _debug(msg);
+  else
+    _debug(JSON.stringify(msg,null,4));
+}
+
+/**
+ * Currently array conversion is not supported.
+ * So, we run it manually.
+ */
+class array {
+
+  constructor(array) {
+    this.arr = array;
+  }
+
+  get length() {
+    return this.arr.length;
+  }
+
+  at(index) {
+    return this.arr.at(index);
+  }
+
+  map(func) {
+    var result = [];
+    var len = this.length;
+    for (var i = 0; i < len; i++)
+      result.push(func(this.arr.at(i)));
+    return result;
+  }
+
+  to_array() {
+    return this.map(x => x);
+  }
+
 }
 
 /**
@@ -89,7 +133,7 @@ class html {
   select(xpath) {
     var nodes = this.node.select(xpath);
     if (!nodes) return null;
-    return nodes.map(x => new html(x));
+    return (new array(nodes)).map(x => new html(x));
   }
 
   /**
@@ -107,7 +151,7 @@ class html {
    * @returns {html[]}
    */
   cal(pattern) {
-    return this.node.cal(pattern).map(x => new html(x));
+    return (new array(this.node.cal(pattern)).map(x => new html(x));
   } 
   
   /**
@@ -183,7 +227,7 @@ class url {
   constructor(url) {
     this.url = _native.create_url(url);
   }
-  
+
   get host() {
     return this.url.host;
   }

@@ -26,26 +26,6 @@ namespace koromo_copy_backend.Script
     /// </summary>
     public class KoromoScriptInstance
     {
-        //public class _Network
-        //{
-        //    public static string get_string(string address) =>
-        //        NetTools.DownloadString(address);
-        //    public static _Html get_html(string address) =>
-        //        new _Html(NetTools.DownloadString(address));
-        //    public static _Task get_task(string address, object attr) =>
-        //        new _Task(address, attr);
-
-        //    public class _Task
-        //    {
-        //        NetTask _task;
-        //        public _Task(string url, object attr)
-        //        {
-        //            var x = attr.ToString();
-        //            //task = NetTask.MakeDefault(url);
-        //        }
-        //    }
-        //}
-
         public class _Url
         {
             public static string get_parameter(string url, string param)
@@ -68,6 +48,14 @@ namespace koromo_copy_backend.Script
             public string host { get { return uri.Host; } }
         }
 
+        public class _Array<T>
+        {
+            T[] array;
+            public _Array(T[] array) { this.array = array; }
+            public int length { get { return array.Length; } }
+            public T at(int index) { return array[index]; }
+        }
+
         public class _Html
         {
             HtmlNode node;
@@ -81,10 +69,10 @@ namespace koromo_copy_backend.Script
                 if (result == null) return null;
                 return new _Html(result);
             }
-            public _Html[] select(string path) {
+            public _Array<_Html> select(string path) {
                 var result = node.SelectNodes(path);
                 if (result == null) return null;
-                return result.Select(x => new _Html(x)).ToArray(); 
+                return new _Array<_Html>(result.Select(x => new _Html(x)).ToArray()); 
             }
 
             public string inner_text { get { return node.InnerText; } }
@@ -93,7 +81,7 @@ namespace koromo_copy_backend.Script
             public string text { get { return node.MyText(); } }
 
             public string attr(string what) { return node.GetAttributeValue(what, ""); }
-            public string[] cal(string pattern) => HtmlCAL.Calculate(pattern, node).ToArray();
+            public _Array<string> cal(string pattern) => new _Array<string>(HtmlCAL.Calculate(pattern, node).ToArray());
         }
 
         public class _Version
@@ -175,7 +163,6 @@ namespace koromo_copy_backend.Script
             {
 #if DEBUG
                 engine.ExecuteFile("../../../../scripts/support.js");
-                //engine.Execute(File.ReadAllText("../../../../scripts/support.js") + "\r\n" + File.ReadAllText(js));
 #else
                 engine.ExecuteFile("scripts/support.js");
 #endif
@@ -228,7 +215,7 @@ namespace koromo_copy_backend.Script
         void register(string name, string author, string version, string id) 
         {
             Version = new _Version(name, author, version, id);
-            engine.EmbedHostObject("version", Version);
+            //engine.EmbedHostObject("version", Version);
         }
 
         #region Logging
