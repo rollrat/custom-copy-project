@@ -151,7 +151,7 @@ class html {
    * @returns {html[]}
    */
   cal(pattern) {
-    return (new array(this.node.cal(pattern)).map(x => new html(x));
+    return (new array(this.node.cal(pattern))).map(x => new html(x));
   } 
   
   /**

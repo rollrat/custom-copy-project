@@ -2,7 +2,11 @@
 // Copyright (C) 2020. rollrat. Licensed under the MIT Licence.
 
 using HtmlAgilityPack;
+#if WIN32 || WIN64
+using JavaScriptEngineSwitcher.V8;
+#else
 using JavaScriptEngineSwitcher.ChakraCore;
+#endif
 using JavaScriptEngineSwitcher.Core;
 using koromo_copy_backend.Crypto;
 using koromo_copy_backend.Html;
@@ -129,14 +133,23 @@ namespace koromo_copy_backend.Script
             if (init) return;
             init = true;
             var engineSwitcher = JsEngineSwitcher.Current;
+#if WIN32 || WIN64
+            engineSwitcher.EngineFactories.Add(new V8JsEngineFactory());
+            engineSwitcher.DefaultEngineName = V8JsEngine.EngineName;
+#else
             engineSwitcher.EngineFactories.Add(new ChakraCoreJsEngineFactory());
             engineSwitcher.DefaultEngineName = ChakraCoreJsEngine.EngineName;
+#endif
         }
 
         public static KoromoScriptInstance CreateNewInstance()
         {
             configure();
+#if WIN32 || WIN64
+            var engine = JsEngineSwitcher.Current.CreateEngine(V8JsEngine.EngineName);
+#else
             var engine = JsEngineSwitcher.Current.CreateEngine(ChakraCoreJsEngine.EngineName);
+#endif
 
             engine.EmbedHostType("_native", typeof(_Native));
 
@@ -218,7 +231,7 @@ namespace koromo_copy_backend.Script
             //engine.EmbedHostObject("version", Version);
         }
 
-        #region Logging
+#region Logging
         void debug(object obj)
         {
 #if DEBUG
@@ -274,6 +287,6 @@ namespace koromo_copy_backend.Script
             else
                 Log.Logs.Instance.PushWarning(obj);
         }
-        #endregion
+#endregion
     }
 }

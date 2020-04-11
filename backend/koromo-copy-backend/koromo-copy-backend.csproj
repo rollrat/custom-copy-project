@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
@@ -11,12 +11,6 @@
     <PackageReference Include="Discord.Net" Version="2.1.1" />
     <PackageReference Include="Esprima" Version="1.0.1270" />
     <PackageReference Include="HtmlAgilityPack" Version="1.11.23" />
-    <PackageReference Include="JavaScriptEngineSwitcher.ChakraCore" Version="3.4.5" />
-    <PackageReference Include="JavaScriptEngineSwitcher.ChakraCore.Native.linux-x64" Version="3.4.5" />
-    <PackageReference Include="JavaScriptEngineSwitcher.ChakraCore.Native.osx-x64" Version="3.4.5" />
-    <PackageReference Include="JavaScriptEngineSwitcher.ChakraCore.Native.win-arm" Version="3.4.5" />
-    <PackageReference Include="JavaScriptEngineSwitcher.ChakraCore.Native.win-x64" Version="3.4.5" />
-    <PackageReference Include="JavaScriptEngineSwitcher.ChakraCore.Native.win-x86" Version="3.4.5" />
     <PackageReference Include="JavaScriptEngineSwitcher.Core" Version="3.3.0" />
     <PackageReference Include="MessagePack" Version="2.1.90" />
     <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
@@ -27,8 +21,51 @@
     <PackageReference Include="Telegram.Bot" Version="15.5.1" />
   </ItemGroup>
 
+  <ItemGroup Condition="'$(RuntimeIdentifier)' == 'win10-x86'">
+    <PackageReference Include="JavaScriptEngineSwitcher.V8" Version="3.3.1" />
+    <PackageReference Include="JavaScriptEngineSwitcher.V8.Native.win-x86" Version="3.3.0" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(RuntimeIdentifier)' == 'win10-x64'">
+    <PackageReference Include="JavaScriptEngineSwitcher.V8" Version="3.3.1" />
+    <PackageReference Include="JavaScriptEngineSwitcher.V8.Native.win-x64" Version="3.3.0" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(RuntimeIdentifier)' == 'win10-arm'">
+    <PackageReference Include="JavaScriptEngineSwitcher.ChakraCore" Version="3.4.5" />
+    <PackageReference Include="JavaScriptEngineSwitcher.ChakraCore.Native.osx-x64" Version="3.4.5" />
+    <PackageReference Include="JavaScriptEngineSwitcher.ChakraCore.Native.win-arm" Version="3.4.5" />
+  </ItemGroup>
+  
+  <ItemGroup Condition="'$(RuntimeIdentifier)' == 'linux-x64'">
+    <PackageReference Include="JavaScriptEngineSwitcher.ChakraCore" Version="3.4.5" />
+    <PackageReference Include="JavaScriptEngineSwitcher.ChakraCore.Native.linux-x64" Version="3.4.5" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(RuntimeIdentifier)' == 'osx.10.15-x64'">
+    <PackageReference Include="JavaScriptEngineSwitcher.ChakraCore" Version="3.4.5" />
+    <PackageReference Include="JavaScriptEngineSwitcher.ChakraCore.Native.osx-x64" Version="3.4.5" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(Configuration)' == 'Debug'">
+    <PackageReference Include="JavaScriptEngineSwitcher.V8" Version="3.3.1" />
+    <PackageReference Include="JavaScriptEngineSwitcher.V8.Native.win-x86" Version="3.3.0" />
+  </ItemGroup>
+
   <ItemGroup>
     <Folder Include="Extractor\" />
   </ItemGroup>
+  
+  <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
+    <DefineConstants>$(DefineConstants);WIN32;WIN64</DefineConstants>
+  </PropertyGroup>
 
+  <PropertyGroup Condition="'$(RuntimeIdentifier)' == 'win10-x86'">
+    <DefineConstants>$(DefineConstants);WIN32</DefineConstants>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(RuntimeIdentifier)' == 'win10-x64'">
+    <DefineConstants>$(DefineConstants);WIN64</DefineConstants>
+  </PropertyGroup>
+  
 </Project>
