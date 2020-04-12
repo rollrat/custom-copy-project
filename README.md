@@ -5,6 +5,8 @@ This program supports Linux, Windows, and Mac OS X operating systems, and can be
 
 ## Structure
 
+![](docs/img/structure.png)
+
 frontend => nodejs(electronjs + reactjs)
 
 backend => c# with javascript
