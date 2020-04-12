@@ -2,13 +2,13 @@ directories:
   output: dist/
   buildResources: resources/installer/
   app: .
-productName: Koromo-Copy.Client
+productName: Custom-Copy.Client
 appId: com.electron.hello
 asar: true
 protocols:
-  name: KoromoCopy
+  name: CustomCopy
   schemes:
-    - koromocopy
+    - customcopy
 mac:
   target:
     - default

@@ -1,5 +1,5 @@
 {
-  "name": "koromo-copy",
+  "name": "custom-copy",
   "version": "0.1.0",
   "description": "",
   "main": "main.js",
@@ -27,13 +27,13 @@
     "ws": "^7.2.3"
   },
   "build": {
-    "productName": "Koromo-Copy.Client",
+    "productName": "Custom-Copy.Client",
     "appId": "com.electron.hello",
     "asar": true,
     "protocols": {
-      "name": "KoromoCopy",
+      "name": "CustomCopy",
       "schemes": [
-        "koromocopy"
+        "customcopy"
       ]
     },
     "mac": {

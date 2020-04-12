@@ -1,6 +1,6 @@
-// This source code is a part of Koromo Copy Project.
+// This source code is a part of Custom Copy Project.
 // Copyright (C) 2020. rollrat. Licensed under the MIT Licence.
-// Koromo Copy Frontend Client UI Source Code
+// Custom Copy Frontend Client UI Source Code
 
 const fs = require("fs");
 const WebSocket = require("ws");
@@ -20,10 +20,10 @@ var ws = new WebSocket(settings.ConnectionAddress, {
 
 ws.on("error", (err) => {
   dialog.showMessageBoxSync(null, {
-    title: "Koromo Copy",
+    title: "Custom Copy",
     type: "error",
     message:
-      "Cannot find websocket server!\nPlease run koromo-copy-server before running koromo-copy-frontend-client-ui!" +
+      "Cannot find websocket server!\nPlease run custom-copy-server before running custom-copy-frontend-client-ui!" +
       "\nRaw: " +
       err,
   });

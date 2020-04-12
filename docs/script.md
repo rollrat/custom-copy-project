@@ -1,6 +1,6 @@
-# Koromo Copy Script
+# Custom Copy Script
 
-`Koromo Copy Script` is interpreter script language for control
+`Custom Copy Script` is interpreter script language for control
 and extension based on `javascript`.
 
 ## How to write your own script?
@@ -8,7 +8,7 @@ and extension based on `javascript`.
 ```js
 register("test-script", "rollrat", "1.0", "test");
 
-info("Koromo Copy Test Script V1.0");
+info("Custom Copy Test Script V1.0");
 
 function $url_check(url) {
   return url.host.split(".")[0] == "google";
@@ -28,7 +28,7 @@ debug("end of file");
 ```
 
 First, you must call `register` method for attaching your script to script manager.
-If you skip this step, then your script is not allowed on `Koromo Copy`.
+If you skip this step, then your script is not allowed on `Custom Copy`.
 
 ## Types and Methods
 

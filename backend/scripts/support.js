@@ -1,4 +1,4 @@
-// This source code is a part of Koromo Copy Project.
+// This source code is a part of Custom Copy Project.
 // Copyright (C) 2020. rollrat. Licensed under the MIT Licence.
 // File: support.js - Preload Type/Class Definitions
 
