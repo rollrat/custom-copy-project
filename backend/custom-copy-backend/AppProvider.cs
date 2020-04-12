@@ -12,6 +12,7 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Reflection;
 using System.Runtime;
 using System.Runtime.CompilerServices;
 using System.Text;
@@ -21,8 +22,8 @@ namespace custom_copy_backend
 {
     public class AppProvider
     {
-        public static string ApplicationPath = Directory.GetCurrentDirectory();
-        public static string DefaultSuperPath = Directory.GetCurrentDirectory();
+        public static string ApplicationPath = Assembly.GetExecutingAssembly().Location;
+        public static string DefaultSuperPath = Assembly.GetExecutingAssembly().Location;
 
         public static Dictionary<string, object> Instance =>
             InstanceMonitor.Instances;
