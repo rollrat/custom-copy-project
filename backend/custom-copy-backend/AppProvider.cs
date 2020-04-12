@@ -22,8 +22,8 @@ namespace custom_copy_backend
 {
     public class AppProvider
     {
-        public static string ApplicationPath = Assembly.GetExecutingAssembly().Location;
-        public static string DefaultSuperPath = Assembly.GetExecutingAssembly().Location;
+        public static string ApplicationPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+        public static string DefaultSuperPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
 
         public static Dictionary<string, object> Instance =>
             InstanceMonitor.Instances;
