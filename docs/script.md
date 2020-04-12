@@ -3,6 +3,12 @@
 `Custom Copy Script` is interpreter script language for control
 and extension based on `javascript`.
 
+## Warning!!
+
+If possible, donot use `try-catch statement`.
+Because, it causes serious performance degradation.
+Check all errors and handle exceptions before publishing the script.
+
 ## How to write your own script?
 
 ```js
