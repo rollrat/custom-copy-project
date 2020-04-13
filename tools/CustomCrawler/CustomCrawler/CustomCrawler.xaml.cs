@@ -57,7 +57,7 @@ namespace CustomCrawler
         {
             public IResourceHandler Create(IBrowser browser, IFrame frame, string schemeName, IRequest request)
             {
-                if (request.Url.EndsWith(".js") && !JsManager.Instance.Contains(request.Url))
+                if (request.Url.Split('?')[0].EndsWith(".js") && !JsManager.Instance.Contains(request.Url))
                 {
                     try
                     {

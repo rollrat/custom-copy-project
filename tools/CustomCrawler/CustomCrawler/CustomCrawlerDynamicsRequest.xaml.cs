@@ -44,6 +44,8 @@ namespace CustomCrawler
 
             env.Subscribe<RequestWillBeSentEvent>(x =>
             {
+                if (x.Request.Url.Contains("gall.dcinside.com/board/comment"))
+                    ;
                 Application.Current.Dispatcher.BeginInvoke(new Action(
                 delegate
                 {
