@@ -62,38 +62,6 @@ namespace CustomCrawler
             public IEnumerable<INode> ChildNodes { get; set; }
         }
 
-        void find_internal(ref List<INode> result, INode node, int line, int column)
-        {
-            if (node.Location.Start.Line > line || node.Location.End.Line < line)
-                return;
-
-            if (node.Location.Start.Line == node.Location.End.Line)
-            {
-                if (node.Location.Start.Column > column || node.Location.End.Column < column)
-                    return;
-            }
-
-            result.Add(node);
-
-            if (node.ChildNodes == null || node.ChildNodes.Count() == 0)
-                return;
-
-            var ii = node.ChildNodes.ToList().BinarySearch(new bb(line, column), Comparer<INode>.Create((x, y) =>
-            {
-                if (x.Location.Start.Line != y.Location.Start.Line)
-                    return x.Location.Start.Line.CompareTo(y.Location.Start.Line);
-                if (x.Location.End.Line != y.Location.End.Line)
-                    return x.Location.End.Line.CompareTo(y.Location.End.Line);
-                if (x.Location.Start.Column != y.Location.Start.Column)
-                    return x.Location.Start.Column.CompareTo(y.Location.Start.Line);
-                if (x.Location.End.Column != y.Location.End.Column)
-                    return x.Location.End.Column.CompareTo(y.Location.End.Column);
-                return 0;
-            }));
-
-            find_internal(ref result, node.ChildNodes.ElementAt(ii), line, column);
-        }
-
         void find_internal(ref List<INode> result, IEnumerable<INode> node, int line, int column)
         {
             if (node == null || node.Count() == 0)
@@ -104,12 +72,8 @@ namespace CustomCrawler
             {
                 if (x.Location.Start.Line != y.Location.Start.Line)
                     return x.Location.Start.Line.CompareTo(y.Location.Start.Line);
-                //if (x.Location.End.Line != y.Location.End.Line)
-                //    return x.Location.End.Line.CompareTo(y.Location.End.Line);
                 if (x.Location.Start.Column != y.Location.Start.Column)
                     return x.Location.Start.Column.CompareTo(y.Location.Start.Column);
-                //if (x.Location.End.Column != y.Location.End.Column)
-                //    return x.Location.End.Column.CompareTo(y.Location.End.Column);
                 return 0;
             }));
 
@@ -135,7 +99,6 @@ namespace CustomCrawler
 
             result.Add(z);
 
-            //find_internal(ref result, z.ChildNodes.ElementAt(ii), line, column);
             find_internal(ref result, z.ChildNodes, line, column);
         }
     }
