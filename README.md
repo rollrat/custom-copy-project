@@ -32,16 +32,21 @@ Currently, the `static` web analyzer is almost complete, and we are preparing to
 ## Libraries
 
 ```
+CefSharp: https://github.com/cefsharp/CefSharp
+ChromeDevTools: Origin https://github.com/MasterDevs/ChromeDevTools
+                Fork   https://github.com/KevReed/ChromeDevTools
+Costura: https://github.com/Fody/Costura
 Discord.Net: https://github.com/discord-net/Discord.Net
 Esprima: https://github.com/sebastienros/esprima-dotnet
 HtmlAgilityPack: https://html-agility-pack.net/
 JavaScriptEngineSwitcher: https://github.com/Taritsyn/JavaScriptEngineSwitcher
  - win10-x86 & win10-x64: V8
  - win10-arm & linux-x64 & osx.10.15-x64: ChakraCore
-ChromeDevTools: Origin https://github.com/MasterDevs/ChromeDevTools
-                Fork   https://github.com/KevReed/ChromeDevTools
+MaterialDesignThemes: https://github.com/MaterialDesignInXAML/MaterialDesignInXamlTool
 MessagePack: https://github.com/neuecc/MessagePack-CSharp
 Newtonsoft.Json: https://www.newtonsoft.com/json
+libcef: https://github.com/chromiumembedded/cefkit
+Selenium: https://github.com/SeleniumHQ/selenium
 SixLabors.ImageSharp: https://github.com/SixLabors/ImageSharp
 sqlte-net-pcl: https://github.com/praeclarum/sqlite-net
 System.Net.Sockets: https://github.com/dotnet/corefx
