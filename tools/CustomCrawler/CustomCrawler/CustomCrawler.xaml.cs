@@ -36,7 +36,8 @@ namespace CustomCrawler
             InitializeComponent();
 
             CefSettings set = new CefSettings();
-            ChromeDevtoolsEnvironment.Settings(ref set);
+            //ChromeDevtoolsEnvironment.Settings(ref set);
+            ChromeDevTools.Settings(ref set);
             set.RegisterScheme(new CefCustomScheme()
             {
                 SchemeName = "http",

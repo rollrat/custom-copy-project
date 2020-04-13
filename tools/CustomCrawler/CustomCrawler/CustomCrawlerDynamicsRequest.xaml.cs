@@ -7,13 +7,9 @@
 ***/
 
 using CustomCrawler.chrome_devtools;
-using CustomCrawler.chrome_devtools.Event.Debugger;
-using CustomCrawler.chrome_devtools.Event.DOM;
-using CustomCrawler.chrome_devtools.Event.Network;
-using CustomCrawler.chrome_devtools.Method.Debugger;
-using CustomCrawler.chrome_devtools.Method.DOM;
-using CustomCrawler.chrome_devtools.Method.DOMDebugger;
-using CustomCrawler.chrome_devtools.Types.DOM;
+using MasterDevs.ChromeDevTools;
+using MasterDevs.ChromeDevTools.Protocol.Chrome.DOM;
+using MasterDevs.ChromeDevTools.Protocol.Chrome.Network;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
@@ -39,14 +35,14 @@ namespace CustomCrawler
     {
         int index_count = 0;
 
-        public CustomCrawlerDynamicsRequest(ChromeDevtoolsEnvironment env)
+        public CustomCrawlerDynamicsRequest(IChromeSession env)
         {
             InitializeComponent();
 
             RequestList.DataContext = new CustomCrawlerDynamicsRequestDataGridViewModel();
             RequestList.Sorting += new DataGridSortingEventHandler(new DataGridSorter<CustomCrawlerDynamicsRequestDataGridItemViewModel>(RequestList).SortHandler);
 
-            env.Subscribe<RequestWillBeSent>(x =>
+            env.Subscribe<RequestWillBeSentEvent>(x =>
             {
                 Application.Current.Dispatcher.BeginInvoke(new Action(
                 delegate
@@ -56,13 +52,13 @@ namespace CustomCrawler
                         Id = (++index_count).ToString(),
                         Type = "Request",
                         Url = x.Request.Url,
-                        ContentType = x.ResourceType,
+                        ContentType = x.Type.ToString(),
                         Request = x
                     });
                 }));
             });
 
-            env.Subscribe<ResponseReceived>(x =>
+            env.Subscribe<ResponseReceivedEvent>(x =>
             {
                 Application.Current.Dispatcher.BeginInvoke(new Action(
                 delegate
@@ -72,13 +68,13 @@ namespace CustomCrawler
                         Id = (++index_count).ToString(),
                         Type = "Response",
                         Url = x.Response.Url,
-                        ContentType = x.ResourceType,
+                        ContentType = x.Type.ToString(),
                         Response = x
                     });
                 }));
             });
 
-            env.Subscribe<DocumentUpdated>(x =>
+            env.Subscribe<DocumentUpdatedEvent>(x =>
             {
                 Application.Current.Dispatcher.BeginInvoke(new Action(
                 delegate
@@ -91,11 +87,11 @@ namespace CustomCrawler
                 }));
             });
 
-            env.Subscribe<ChildNodeInserted>(x =>
+            env.Subscribe<ChildNodeInsertedEvent>(x =>
             {
                 var xx = "";
-                if (x.Node == null || x.Node.Attributes == null)
-                    xx = string.Join(",", x.Node.Attributes);
+                //if (x.Node == null || x.Node.Attributes == null)
+                //    xx = string.Join(",", x.Node.Attributes);
                 Application.Current.Dispatcher.BeginInvoke(new Action(
                 delegate
                 {
@@ -107,11 +103,11 @@ namespace CustomCrawler
                     });
                 }));
             });
-           
-            Closed += (s, e) =>
-            {
-                env.Dispose();
-            };
+
+            //Closed += (s, e) =>
+            //{
+            //    env.Dispose();
+            //};
         }
 
         private void RequestList_SelectedCellsChanged(object sender, SelectedCellsChangedEventArgs e)

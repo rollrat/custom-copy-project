@@ -54,6 +54,7 @@
 
   <ItemGroup>
     <Folder Include="Extractor\" />
+    <Folder Include="UI\" />
   </ItemGroup>
   
   <PropertyGroup Condition="'$(Configuration)' == 'Debug'">

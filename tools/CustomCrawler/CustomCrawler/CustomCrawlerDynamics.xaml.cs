@@ -9,11 +9,9 @@
 using CefSharp;
 using CefSharp.Wpf;
 using CustomCrawler.chrome_devtools;
-using CustomCrawler.chrome_devtools.Method.Debugger;
-using CustomCrawler.chrome_devtools.Method.DOM;
-using CustomCrawler.chrome_devtools.Method.DOMDebugger;
-using CustomCrawler.chrome_devtools.Types.DOM;
-using CustomCrawler.chrome_devtools.Types.Runtime;
+using MasterDevs.ChromeDevTools;
+using MasterDevs.ChromeDevTools.Protocol.Chrome.DOM;
+using MasterDevs.ChromeDevTools.Protocol.Chrome.Runtime;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
@@ -54,15 +52,18 @@ namespace CustomCrawler
 
         private async void Browser_LoadingStateChanged(object sender, LoadingStateChangedEventArgs e)
         {
-            if (!e.IsLoading && env != null)
+            if (!e.IsLoading && ss != null)
             {
-                var doc = await env.Request(new GetDocument { Depth = -1 });
-                var root_node = JsonConvert.DeserializeObject<Node>(JObject.Parse(doc.Result.ToString())["root"].ToString());
-                env.PauseTimer();
-                _ = find_source(root_node);
+                var doc = await ss.SendAsync(new GetDocumentCommand { Depth = -1 });
+
+                _ = Task.Run(async () =>
+                {
+                    await find_source(doc.Result.Root);
+                });
             }
         }
 
+        List<(long, StackTrace)> stacks = new List<(long, StackTrace)>();
         private async Task find_source(Node nn)
         {
             if (nn.Children != null)
@@ -72,16 +73,10 @@ namespace CustomCrawler
                 {
                     URLText.Text = nn.NodeId.ToString();
                 }));
-                try
+                var st = await ss.SendAsync(new GetNodeStackTracesCommand { NodeId = nn.NodeId });
+                if (st.Result != null && st.Result.Creation != null)
                 {
-                    var st = await env.Request(new GetNodeStackTraces { NodeId = nn.NodeId });
-                    if (st.Result != null)
-                        ;
-                    var ff = JsonConvert.DeserializeObject<StackTrace>(JObject.Parse(st.Result.ToString())["creation"].ToString());
-                    MessageBox.Show(JObject.Parse(st.Result.ToString())["creation"].ToString());
-                } catch (Exception ex) {
-                    if (ex.Message.Contains("WebSocket"))
-                        ;
+                    stacks.Add((nn.NodeId, st.Result.Creation));
                 }
                 foreach (var child in nn.Children)
                 {
@@ -92,27 +87,21 @@ namespace CustomCrawler
 
         private void CustomCrawlerDynamics_Closed(object sender, EventArgs e)
         {
-            if (env != null)
-                env.Dispose();
+           ChromeDevTools.Dispose();
         }
 
-        ChromeDevtoolsEnvironment env;
-
+        IChromeSession ss;
+        bool init = false;
         private async void Button_Click(object sender, RoutedEventArgs e)
         {
-            if (env == null)
+            if (!init)
             {
                 var token = new Random().Next();
                 browser.LoadHtml(token.ToString());
+                init = true;
 
-                var target = ChromeDevtoolsEnvironment.GetDebuggeeList().Where(x => x.Url == $"data:text/html,{token}");
-                env = ChromeDevtoolsEnvironment.CreateInstance(target.First());
-                new CustomCrawlerDynamicsRequest(env).Show();
-
-                await env.Connect();
-                await env.Option();
-
-                _ = Task.Run(async () => { await env.Start(); });
+                ss = await ChromeDevTools.Create();
+                new CustomCrawlerDynamicsRequest(ss).Show();
             }
 
             browser.Load(URLText.Text);
