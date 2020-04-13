@@ -38,6 +38,8 @@ HtmlAgilityPack: https://html-agility-pack.net/
 JavaScriptEngineSwitcher: https://github.com/Taritsyn/JavaScriptEngineSwitcher
  - win10-x86 & win10-x64: V8
  - win10-arm & linux-x64 & osx.10.15-x64: ChakraCore
+ChromeDevTools: Origin https://github.com/MasterDevs/ChromeDevTools
+                Fork   https://github.com/KevReed/ChromeDevTools
 MessagePack: https://github.com/neuecc/MessagePack-CSharp
 Newtonsoft.Json: https://www.newtonsoft.com/json
 SixLabors.ImageSharp: https://github.com/SixLabors/ImageSharp
