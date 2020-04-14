@@ -143,7 +143,7 @@ namespace CustomCrawler
 
                         while (stack != null)
                         {
-                            if (string.IsNullOrEmpty(stack.Description))
+                            if (!string.IsNullOrEmpty(stack.Description))
                                 paragraph.Inlines.Add("Description: " + stack.Description + "\r\n");
 
                             if (depth < 5)
@@ -153,7 +153,7 @@ namespace CustomCrawler
                                     if (ignore_js(frame.Url))
                                         continue;
 
-                                    if (string.IsNullOrEmpty(frame.Url))
+                                    if (!string.IsNullOrEmpty(frame.Url))
                                     {
                                         var hy1 = new Hyperlink();
                                         hy1.NavigateUri = new Uri(frame.Url);
@@ -165,18 +165,22 @@ namespace CustomCrawler
                                     // Currently not support html built-in script
                                     var node = JsManager.Instance.FindByLocation(frame.Url, (int)frame.LineNumber + 1, (int)frame.ColumnNumber + 1);
                                     var picks = instance.pick_candidate(frame.Url, node, frame.FunctionName, (int)frame.LineNumber + 1, (int)frame.ColumnNumber + 1);
+                                    var count = 0;
 
                                     foreach (var pick in picks)
                                     {
                                         paragraph.Inlines.Add("  => ");
                                         var hy2 = new Hyperlink();
                                         hy2.DataContext = pick.Item2;
-                                        hy2.Inlines.Add($"{frame.Url}");
+                                        hy2.Inlines.Add($"{instance.requests[pick.Item2].Request.Url}");
                                         paragraph.Inlines.Add(hy2);
 
                                         if (pick.Item1.FunctionName != frame.FunctionName|| pick.Item1.LineNumber != frame.LineNumber || pick.Item1.ColumnNumber != frame.ColumnNumber)
                                             paragraph.Inlines.Add($":<{pick.Item1.FunctionName}>:{pick.Item1.LineNumber + 1}:{pick.Item1.ColumnNumber + 1}");
                                         paragraph.Inlines.Add(new LineBreak());
+
+                                        if (count++ > 10)
+                                            break;
                                     }
                                 }
                             }
@@ -209,7 +213,7 @@ namespace CustomCrawler
                 System.Diagnostics.Process.Start(hyperlink.NavigateUri.ToString());
             else
             {
-                var child = new CustomCrawlerDynamicsRequestInfo(requests[(hyperlink.DataContext as int?).Value]);
+                var child = new CustomCrawlerDynamicsRequestInfo(requests[(hyperlink.DataContext as int?).Value], response[requests[(hyperlink.DataContext as int?).Value].RequestId]);
                 child.Show();
                 childs.Add(child);
             }
@@ -283,6 +287,7 @@ namespace CustomCrawler
                 JsManager.Instance.Clear();
                 requests = new List<RequestWillBeSentEvent>();
                 what_is_near = new Dictionary<string, HashSet<int>>();
+                response = new Dictionary<string, ResponseReceivedEvent>();
                 ss = await ChromeDevTools.Create();
                 (child = new CustomCrawlerDynamicsRequest(ss, this)).Show();
 
@@ -350,6 +355,12 @@ namespace CustomCrawler
                     stack = stack.Parent;
                 }
             }
+        }
+
+        Dictionary<string, ResponseReceivedEvent> response;
+        public void add_response_info(ResponseReceivedEvent res)
+        {
+            response.Add(res.RequestId, res);
         }
 
         private List<(CallFrame, int, int, int)> pick_candidate(string url, List<Esprima.Ast.INode> node, string function_name, int line, int column)

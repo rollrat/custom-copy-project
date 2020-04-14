@@ -9,6 +9,8 @@
 using MasterDevs.ChromeDevTools;
 using MasterDevs.ChromeDevTools.Protocol.Chrome.Network;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using Newtonsoft.Json.Schema;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -30,7 +32,7 @@ namespace CustomCrawler
     /// </summary>
     public partial class CustomCrawlerDynamicsRequestInfo : Window
     {
-        public CustomCrawlerDynamicsRequestInfo(RequestWillBeSentEvent request)
+        public CustomCrawlerDynamicsRequestInfo(RequestWillBeSentEvent request, ResponseReceivedEvent response)
         {
             InitializeComponent();
 
@@ -41,22 +43,33 @@ namespace CustomCrawler
             builder.Append(JsonConvert.SerializeObject(request.Request, Formatting.Indented));
             builder.Append($"\r\n");
             builder.Append($"\r\n");
-            builder.Append($"Response:\r\n");
+            builder.Append($"==============================================================================================================================\r\n");
+            builder.Append($"Response Raw:\r\n");
 
             var result = CustomCrawlerDynamics.ss.SendAsync(new GetResponseBodyCommand
             {
                 RequestId = request.RequestId
             }).Result;
 
-            if (result.Result.Base64Encoded)
-            {
-                string body;
-                result.Result.Body.TryParseBase64(out body);
-                builder.Append(body);
-            }
-            else
-                builder.Append(result.Result.Body);
+            string body;
 
+            if (result.Result.Base64Encoded)
+                result.Result.Body.TryParseBase64(out body);
+            else
+                body = result.Result.Body;
+
+            try
+            {
+                body = JsonConvert.SerializeObject(JToken.Parse(body), Formatting.Indented);
+            }
+            catch { }
+
+            builder.Append(body);
+
+            builder.Append($"\r\n");
+            builder.Append($"==============================================================================================================================\r\n");
+            builder.Append($"Response Body:\r\n");
+            builder.Append(JsonConvert.SerializeObject(response.Response, Formatting.Indented));
             Info.Text = builder.ToString();
         }
     }

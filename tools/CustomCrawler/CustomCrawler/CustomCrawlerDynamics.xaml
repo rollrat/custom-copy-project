@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:CustomCrawler"
         mc:Ignorable="d"
-        Title="Custom Crawler Dynamics" Height="844.028" Width="2059.062">
+        Title="Custom Crawler Dynamics" Height="844.028" Width="2076.062">
     <Grid Margin="8">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>

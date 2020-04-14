@@ -44,8 +44,6 @@ namespace CustomCrawler
 
             env.Subscribe<RequestWillBeSentEvent>(x =>
             {
-                if (x.Request.Url.Contains("gall.dcinside.com/board/comment"))
-                    ;
                 Task.Run(() => parent.add_request_info(x));
                 Application.Current.Dispatcher.BeginInvoke(new Action(
                 delegate
@@ -63,6 +61,7 @@ namespace CustomCrawler
 
             env.Subscribe<ResponseReceivedEvent>(x =>
             {
+                Task.Run(() => parent.add_response_info(x));
                 Application.Current.Dispatcher.BeginInvoke(new Action(
                 delegate
                 {
