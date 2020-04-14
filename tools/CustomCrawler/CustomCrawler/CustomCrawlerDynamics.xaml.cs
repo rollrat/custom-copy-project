@@ -237,6 +237,12 @@ namespace CustomCrawler
                 
                 ss = await ChromeDevTools.Create();
                 (child = new CustomCrawlerDynamicsRequest(ss)).Show();
+
+                _ = Application.Current.Dispatcher.BeginInvoke(new Action(
+                delegate
+                {
+                    Navigate.IsEnabled = false;
+                }));
             }
 
             browser.Load(URLText.Text);
