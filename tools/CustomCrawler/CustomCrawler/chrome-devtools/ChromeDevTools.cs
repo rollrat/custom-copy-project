@@ -69,7 +69,8 @@ namespace CustomCrawler.chrome_devtools
 
         public static void Dispose()
         {
-            icp.Dispose();
+            if (icp != null)
+                icp.Dispose();
         }
     }
 }
