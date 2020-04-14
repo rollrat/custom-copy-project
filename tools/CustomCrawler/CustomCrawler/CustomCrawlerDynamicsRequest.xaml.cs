@@ -35,7 +35,7 @@ namespace CustomCrawler
     {
         int index_count = 0;
 
-        public CustomCrawlerDynamicsRequest(IChromeSession env)
+        public CustomCrawlerDynamicsRequest(IChromeSession env, CustomCrawlerDynamics parent)
         {
             InitializeComponent();
 
@@ -46,6 +46,7 @@ namespace CustomCrawler
             {
                 if (x.Request.Url.Contains("gall.dcinside.com/board/comment"))
                     ;
+                Task.Run(() => parent.add_request_info(x));
                 Application.Current.Dispatcher.BeginInvoke(new Action(
                 delegate
                 {

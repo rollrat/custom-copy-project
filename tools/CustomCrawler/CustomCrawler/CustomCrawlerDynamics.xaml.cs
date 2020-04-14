@@ -12,6 +12,7 @@ using CustomCrawler.chrome_devtools;
 using HtmlAgilityPack;
 using MasterDevs.ChromeDevTools;
 using MasterDevs.ChromeDevTools.Protocol.Chrome.DOM;
+using MasterDevs.ChromeDevTools.Protocol.Chrome.Network;
 using MasterDevs.ChromeDevTools.Protocol.Chrome.Runtime;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -39,7 +40,7 @@ namespace CustomCrawler
     {
         ChromiumWebBrowser browser;
         CallbackCCW cbccw;
-        static bool opened = false;
+        public static bool opened = false;
 
         public CustomCrawlerDynamics()
         {
@@ -88,6 +89,28 @@ namespace CustomCrawler
 
         #region Cef Callback
 
+        public static bool ignore_js(string url)
+        {
+            var filename = url.Split('?')[0].Split('/').Last();
+
+            if (filename.StartsWith("jquery"))
+                return true;
+
+            //switch (filename.ToLower())
+            //{
+            //    case "js.cookie.js":
+            //    case "html5shiv.min.js":
+            //    case "yall.js":
+            //    case "moment.js":
+            //    case "yall.min.js":
+            //    case "underscore.js":
+            //    case "partial.js":
+            //        return true;
+            //}
+
+            return false;
+        }
+
         bool locking = false;
         public class CallbackCCW
         {
@@ -99,27 +122,6 @@ namespace CustomCrawler
             public CallbackCCW(CustomCrawlerDynamics instance)
             {
                 this.instance = instance;
-            }
-            public static bool ignore_js(string url)
-            {
-                var filename = url.Split('?')[0].Split('/').Last();
-
-                if (filename.StartsWith("jquery"))
-                    return true;
-
-                //switch (filename.ToLower())
-                //{
-                //    case "js.cookie.js":
-                //    case "html5shiv.min.js":
-                //    case "yall.js":
-                //    case "moment.js":
-                //    case "yall.min.js":
-                //    case "underscore.js":
-                //    case "partial.js":
-                //        return true;
-                //}
-
-                return false;
             }
             public void hoverelem(string elem, bool adjust = false)
             {
@@ -135,39 +137,81 @@ namespace CustomCrawler
                     if (instance.stacks.ContainsKey(elem))
                     {
                         var stack = instance.stacks[elem];
-                        var builder = new StringBuilder();
+                        var depth = 0;
+
+                        var paragraph = new Paragraph();
 
                         while (stack != null)
                         {
-                            if (!string.IsNullOrEmpty(stack.Description))
-                                builder.Append("Description: " + stack.Description + "\r\n");
+                            if (string.IsNullOrEmpty(stack.Description))
+                                paragraph.Inlines.Add("Description: " + stack.Description + "\r\n");
 
-                            foreach (var frame in stack.CallFrames)
+                            if (depth < 5)
                             {
-                                if (ignore_js(frame.Url))
-                                    continue;
-                                //if (!frame.Url.Contains("comment"))
-                                //    continue;
-                                builder.Append($"{frame.Url}:<{frame.FunctionName}>:{frame.LineNumber + 1}:{frame.ColumnNumber + 1}\r\n");
+                                foreach (var frame in stack.CallFrames)
+                                {
+                                    if (ignore_js(frame.Url))
+                                        continue;
 
-                                // Currently not support html built-in script
-                                JsManager.Instance.FindByLocation(frame.Url, (int)frame.LineNumber + 1, (int)frame.ColumnNumber + 1);
+                                    if (string.IsNullOrEmpty(frame.Url))
+                                    {
+                                        var hy1 = new Hyperlink();
+                                        hy1.NavigateUri = new Uri(frame.Url);
+                                        hy1.Inlines.Add($"{frame.Url}");
+                                        paragraph.Inlines.Add(hy1);
+                                    }
+                                    paragraph.Inlines.Add($":<{frame.FunctionName}>:{frame.LineNumber + 1}:{frame.ColumnNumber + 1}\r\n");
+
+                                    // Currently not support html built-in script
+                                    var node = JsManager.Instance.FindByLocation(frame.Url, (int)frame.LineNumber + 1, (int)frame.ColumnNumber + 1);
+                                    var picks = instance.pick_candidate(frame.Url, node, frame.FunctionName, (int)frame.LineNumber + 1, (int)frame.ColumnNumber + 1);
+
+                                    foreach (var pick in picks)
+                                    {
+                                        paragraph.Inlines.Add("  => ");
+                                        var hy2 = new Hyperlink();
+                                        hy2.DataContext = pick.Item2;
+                                        hy2.Inlines.Add($"{frame.Url}");
+                                        paragraph.Inlines.Add(hy2);
+
+                                        if (pick.Item1.FunctionName != frame.FunctionName|| pick.Item1.LineNumber != frame.LineNumber || pick.Item1.ColumnNumber != frame.ColumnNumber)
+                                            paragraph.Inlines.Add($":<{pick.Item1.FunctionName}>:{pick.Item1.LineNumber + 1}:{pick.Item1.ColumnNumber + 1}");
+                                        paragraph.Inlines.Add(new LineBreak());
+                                    }
+                                }
                             }
 
+                            depth++;
                             stack = stack.Parent;
                         }
 
-                        instance.Info.Text = builder.ToString();
+                        instance.Info.Document.Blocks.Clear();
+                        instance.Info.Document.Blocks.Add(paragraph);
                     }
                     else
                     {
-                        instance.Info.Text = "Static Node";
+                        instance.Info.Document.Blocks.Clear();
+                        instance.Info.Document.Blocks.Add(new Paragraph(new Run("Static Node")));
                     }
                 }));
             }
             public void adjust()
             {
                 hoverelem(latest_elem, true);
+            }
+        }
+
+        List<Window> childs = new List<Window>();
+        private void Hyperlink_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            var hyperlink = (Hyperlink)sender;
+            if (hyperlink.DataContext == null)
+                System.Diagnostics.Process.Start(hyperlink.NavigateUri.ToString());
+            else
+            {
+                var child = new CustomCrawlerDynamicsRequestInfo(requests[(hyperlink.DataContext as int?).Value]);
+                child.Show();
+                childs.Add(child);
             }
         }
 
@@ -222,9 +266,10 @@ namespace CustomCrawler
             ChromeDevTools.Dispose();
             if (child != null)
                 child.Close();
+            childs.Where(x => x.IsLoaded).ToList().ForEach(x => x.Close());
         }
 
-        IChromeSession ss;
+        public static IChromeSession ss;
         bool init = false;
         CustomCrawlerDynamicsRequest child;
         private async void Button_Click(object sender, RoutedEventArgs e)
@@ -234,9 +279,12 @@ namespace CustomCrawler
                 var token = new Random().Next();
                 browser.LoadHtml(token.ToString());
                 init = true;
-                
+
+                JsManager.Instance.Clear();
+                requests = new List<RequestWillBeSentEvent>();
+                what_is_near = new Dictionary<string, HashSet<int>>();
                 ss = await ChromeDevTools.Create();
-                (child = new CustomCrawlerDynamicsRequest(ss)).Show();
+                (child = new CustomCrawlerDynamicsRequest(ss, this)).Show();
 
                 _ = Application.Current.Dispatcher.BeginInvoke(new Action(
                 delegate
@@ -267,5 +315,123 @@ namespace CustomCrawler
                 Build.IsEnabled = true;
             }));
         }
+
+        // <js filename, requests>
+        List<RequestWillBeSentEvent> requests;
+        Dictionary<string, HashSet<int>> what_is_near;
+        public void add_request_info(RequestWillBeSentEvent request)
+        {
+            // Metadata files are filtered here.
+            if (request.Initiator == null || request.Initiator.Stack == null ||
+                request.Initiator.Stack.CallFrames == null || request.Initiator.Stack.CallFrames.Length == 0)
+                return;
+
+            if (request.Request.Url == "")
+                return;
+
+            if (ignore_js(request.Request.Url))
+                return;
+
+            requests.Add(request);
+            var index = requests.Count - 1;
+
+            var stack = request.Initiator.Stack;
+
+            lock (what_is_near)
+            {
+                while (stack != null)
+                {
+                    foreach (var frame in stack.CallFrames)
+                    {
+                        if (!what_is_near.ContainsKey(frame.Url))
+                            what_is_near.Add(frame.Url, new HashSet<int>());
+                        what_is_near[frame.Url].Add(index);
+                    }
+                    stack = stack.Parent;
+                }
+            }
+        }
+
+        private List<(CallFrame, int, int, int)> pick_candidate(string url, List<Esprima.Ast.INode> node, string function_name, int line, int column)
+        {
+            var pre = new List<(CallFrame, int)>();
+            HashSet<int> ll;
+
+            lock (what_is_near)
+            {
+                if (!what_is_near.ContainsKey(url))
+                    return new List<(CallFrame, int, int, int)>();
+                ll = what_is_near[url];
+            }
+
+            var cnt = ll.Count;
+            for (int i = 0; i < cnt; i++)
+            {
+                var item = requests[ll.ElementAt(i)];
+                var stack = item.Initiator.Stack;
+
+                while (stack != null)
+                {
+                    foreach (var frame in stack.CallFrames)
+                    {
+                        if (frame.Url != url)
+                            continue;
+                        pre.Add((frame, ll.ElementAt(i)));
+                    }
+
+                    stack = stack.Parent;
+                }
+            }
+
+            // (frame, requst_index, valid_node_index, distance)
+            var result = new List<(CallFrame, int, int, int)>();
+
+            foreach (var frame in pre)
+            {
+                if (frame.Item1.FunctionName == function_name && frame.Item1.LineNumber == line && frame.Item1.ColumnNumber == column)
+                {
+                    result.Add((frame.Item1, frame.Item2, -1, 0));
+                    continue;
+                }
+
+                var route = JsManager.Instance.FindByLocation(frame.Item1.Url, (int)frame.Item1.LineNumber + 1, (int)frame.Item1.ColumnNumber + 1);
+                var min = Math.Min(route.Count, node.Count);
+                var precom = -1;
+
+                for (int i = 0; i < min; i++)
+                {
+                    if (route[i].Type != node[i].Type)
+                        break;
+                    if (route[i].Location != node[i].Location)
+                        break;
+
+                    precom = i;
+                }
+
+                var validcom = precom;
+
+                while (validcom >= 0)
+                {
+                    if (route[validcom].Type == Esprima.Ast.Nodes.CallExpression ||
+                        route[validcom].Type == Esprima.Ast.Nodes.BlockStatement ||
+                        route[validcom].Type == Esprima.Ast.Nodes.FunctionExpression)
+                    {
+                        break;
+                    }
+
+                    validcom--;
+                }
+
+                if (validcom >= 0)
+                {
+                    result.Add((frame.Item1, frame.Item2, validcom, Math.Abs(validcom - node.Count)));
+                }
+            }
+
+            result.Sort((x, y) => y.Item4.CompareTo(x.Item4));
+
+            return result;
+        }
+
     }
 }

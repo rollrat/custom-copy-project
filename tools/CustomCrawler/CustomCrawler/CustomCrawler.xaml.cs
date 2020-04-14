@@ -506,7 +506,8 @@ namespace CustomCrawler
 
         private void Dynamics_Click(object sender, RoutedEventArgs e)
         {
-            new CustomCrawlerDynamics().Show();
+            if (CustomCrawlerDynamics.opened == false)
+                new CustomCrawlerDynamics().Show();
         }
     }
 }

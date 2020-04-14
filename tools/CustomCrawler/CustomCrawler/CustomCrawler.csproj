@@ -171,6 +171,9 @@
     </ApplicationDefinition>
     <Compile Include="chrome-devtools\ChromeDevTools.cs" />
     <Compile Include="CustomCrawlerDiffDataGridViewModel.cs" />
+    <Compile Include="CustomCrawlerDynamicsRequestInfo.xaml.cs">
+      <DependentUpon>CustomCrawlerDynamicsRequestInfo.xaml</DependentUpon>
+    </Compile>
     <Compile Include="HtmlCAL.cs" />
     <Compile Include="HtmlTree.cs" />
     <Compile Include="SeleniumWrapper.cs" />
@@ -203,6 +206,10 @@
     <Page Include="CustomCrawlerDynamicsRequest.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
+    </Page>
+    <Page Include="CustomCrawlerDynamicsRequestInfo.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="CustomCrawlerImage.xaml">
       <Generator>MSBuild:Compile</Generator>

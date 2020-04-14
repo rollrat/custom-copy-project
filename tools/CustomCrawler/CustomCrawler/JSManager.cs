@@ -20,6 +20,11 @@ namespace CustomCrawler
     {
         Dictionary<string, Script> contents = new Dictionary<string, Script>();
 
+        public void Clear()
+        {
+            contents.Clear();
+        }
+
         public void Register(string url, string js)
         {
             var parser = new JavaScriptParser(js, new ParserOptions { Loc = true });

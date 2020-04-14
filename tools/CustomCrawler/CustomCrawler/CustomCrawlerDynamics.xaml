@@ -44,7 +44,14 @@
         </Border>
 
         <GroupBox Grid.RowSpan="3" Grid.Column="4" Margin="4 0 0 0" Width="600" Header="Hover Item Info (Locking: F2)">
-            <TextBox Margin="2 4 2 2" x:Name="Info"/>
+            <RichTextBox Margin="2 4 2 2" x:Name="Info" IsReadOnly="True" Background="White" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
+                <RichTextBox.Resources>
+                    <Style TargetType="Hyperlink">
+                        <Setter Property="Cursor" Value="Hand" />
+                        <EventSetter Event="MouseLeftButtonDown" Handler="Hyperlink_MouseLeftButtonDown" />
+                    </Style>
+                </RichTextBox.Resources>
+            </RichTextBox>
         </GroupBox>
     </Grid>
 </Window>
