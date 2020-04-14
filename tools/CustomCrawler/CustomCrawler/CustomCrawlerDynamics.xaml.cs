@@ -40,6 +40,7 @@ namespace CustomCrawler
     {
         ChromiumWebBrowser browser;
         CallbackCCW cbccw;
+        CustomCrawlerDynamicsHover hover;
         public static bool opened = false;
 
         public CustomCrawlerDynamics()
@@ -65,6 +66,9 @@ namespace CustomCrawler
             }
 
             opened = true;
+
+            hover = new CustomCrawlerDynamicsHover(this);
+            hover.Show();
         }
 
         private void CustomCrawlerDynamics_KeyDown(object sender, KeyEventArgs e)
@@ -127,76 +131,14 @@ namespace CustomCrawler
             {
                 if (instance.locking) return;
                 Application.Current.Dispatcher.BeginInvoke(new Action(
-                delegate
+                async delegate
                 {
                     instance.browser.GetMainFrame().EvaluateScriptAsync($"document.querySelector('[{before}]').style.border = '{before_border}';").Wait();
                     before = $"ccw_tag={elem}";
                     before_border = instance.browser.GetMainFrame().EvaluateScriptAsync($"document.querySelector('[{before}]').style.border").Result.Result.ToString();
                     instance.browser.GetMainFrame().EvaluateScriptAsync($"document.querySelector('[{before}]').style.border = '0.2em solid red';").Wait();
 
-                    if (instance.stacks.ContainsKey(elem))
-                    {
-                        var stack = instance.stacks[elem];
-                        var depth = 0;
-
-                        var paragraph = new Paragraph();
-
-                        while (stack != null)
-                        {
-                            if (!string.IsNullOrEmpty(stack.Description))
-                                paragraph.Inlines.Add("Description: " + stack.Description + "\r\n");
-
-                            if (depth < 5)
-                            {
-                                foreach (var frame in stack.CallFrames)
-                                {
-                                    if (ignore_js(frame.Url))
-                                        continue;
-
-                                    if (!string.IsNullOrEmpty(frame.Url))
-                                    {
-                                        var hy1 = new Hyperlink();
-                                        hy1.NavigateUri = new Uri(frame.Url);
-                                        hy1.Inlines.Add($"{frame.Url}");
-                                        paragraph.Inlines.Add(hy1);
-                                    }
-                                    paragraph.Inlines.Add($":<{frame.FunctionName}>:{frame.LineNumber + 1}:{frame.ColumnNumber + 1}\r\n");
-
-                                    // Currently not support html built-in script
-                                    var node = JsManager.Instance.FindByLocation(frame.Url, (int)frame.LineNumber + 1, (int)frame.ColumnNumber + 1);
-                                    var picks = instance.pick_candidate(frame.Url, node, frame.FunctionName, (int)frame.LineNumber + 1, (int)frame.ColumnNumber + 1);
-                                    var count = 0;
-
-                                    foreach (var pick in picks)
-                                    {
-                                        paragraph.Inlines.Add("  => ");
-                                        var hy2 = new Hyperlink();
-                                        hy2.DataContext = pick.Item2;
-                                        hy2.Inlines.Add($"{instance.requests[pick.Item2].Request.Url}");
-                                        paragraph.Inlines.Add(hy2);
-
-                                        if (pick.Item1.FunctionName != frame.FunctionName|| pick.Item1.LineNumber != frame.LineNumber || pick.Item1.ColumnNumber != frame.ColumnNumber)
-                                            paragraph.Inlines.Add($":<{pick.Item1.FunctionName}>:{pick.Item1.LineNumber + 1}:{pick.Item1.ColumnNumber + 1}");
-                                        paragraph.Inlines.Add(new LineBreak());
-
-                                        if (count++ > 10)
-                                            break;
-                                    }
-                                }
-                            }
-
-                            depth++;
-                            stack = stack.Parent;
-                        }
-
-                        instance.Info.Document.Blocks.Clear();
-                        instance.Info.Document.Blocks.Add(paragraph);
-                    }
-                    else
-                    {
-                        instance.Info.Document.Blocks.Clear();
-                        instance.Info.Document.Blocks.Add(new Paragraph(new Run("Static Node")));
-                    }
+                    await instance.hover.Update(elem);
                 }));
             }
             public void adjust()
@@ -221,7 +163,7 @@ namespace CustomCrawler
 
         #endregion
 
-        Dictionary<string, StackTrace> stacks = new Dictionary<string, StackTrace>();
+        public Dictionary<string, StackTrace> stacks = new Dictionary<string, StackTrace>();
         private async Task find_source(Node nn)
         {
             _ = Application.Current.Dispatcher.BeginInvoke(new Action(
@@ -271,6 +213,7 @@ namespace CustomCrawler
             if (child != null)
                 child.Close();
             childs.Where(x => x.IsLoaded).ToList().ForEach(x => x.Close());
+            hover.Close();
         }
 
         public static IChromeSession ss;
@@ -322,7 +265,7 @@ namespace CustomCrawler
         }
 
         // <js filename, requests>
-        List<RequestWillBeSentEvent> requests;
+        public List<RequestWillBeSentEvent> requests;
         Dictionary<string, HashSet<int>> what_is_near;
         public void add_request_info(RequestWillBeSentEvent request)
         {
@@ -357,13 +300,13 @@ namespace CustomCrawler
             }
         }
 
-        Dictionary<string, ResponseReceivedEvent> response;
+        public Dictionary<string, ResponseReceivedEvent> response;
         public void add_response_info(ResponseReceivedEvent res)
         {
             response.Add(res.RequestId, res);
         }
 
-        private List<(CallFrame, int, int, int)> pick_candidate(string url, List<Esprima.Ast.INode> node, string function_name, int line, int column)
+        public List<(CallFrame, int, int, int)> pick_candidate(string url, List<Esprima.Ast.INode> node, string function_name, int line, int column)
         {
             var pre = new List<(CallFrame, int)>();
             HashSet<int> ll;

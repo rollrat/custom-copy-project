@@ -70,6 +70,22 @@ namespace CustomCrawler
             builder.Append($"==============================================================================================================================\r\n");
             builder.Append($"Response Body:\r\n");
             builder.Append(JsonConvert.SerializeObject(response.Response, Formatting.Indented));
+            builder.Append($"\r\n");
+            builder.Append($"==============================================================================================================================\r\n");
+            builder.Append($"Request Initiator:\r\n");
+
+            var stack = request.Initiator.Stack;
+            while (stack != null)
+            {
+                if (!string.IsNullOrEmpty(stack.Description))
+                    builder.Append("Description: " + stack.Description + "\r\n");
+
+                foreach (var frame in stack.CallFrames)
+                    builder.Append($"{frame.Url}:<{frame.FunctionName}>:{frame.LineNumber + 1}:{frame.ColumnNumber + 1}\r\n");
+
+                stack = stack.Parent;
+            }
+
             Info.Text = builder.ToString();
         }
     }

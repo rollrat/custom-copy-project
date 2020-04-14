@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:CustomCrawler"
         mc:Ignorable="d"
-        Title="Custom Crawler Dynamics" Height="844.028" Width="2076.062">
+        Title="Custom Crawler Dynamics" Height="844.028" Width="1400">
     <Grid Margin="8">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
@@ -30,6 +30,8 @@
         <StackPanel Grid.Row="1" Orientation="Horizontal" Grid.ColumnSpan="4" Margin="0 2 0 0">
             <TextBlock x:Name="F2" Text="F2: Lock" FontSize="15"/>
             <TextBlock Text="    " FontSize="15"/>
+            <!--<TextBlock Text="F8: Deep Scan" FontSize="15"/>
+            <TextBlock Text="    " FontSize="15"/>-->
             <!--<TextBlock Text="F3: Depth(-)" FontSize="15"/>
             <TextBlock Text="    " FontSize="15"/>
             <TextBlock Text="F4: Depth(+)" FontSize="15"/>
@@ -43,7 +45,7 @@
             <ContentControl x:Name="browserContainer" Content="Browser goes here" Grid.Row="1"/>
         </Border>
 
-        <GroupBox Grid.RowSpan="3" Grid.Column="4" Margin="4 0 0 0" Width="600" Header="Hover Item Info (Locking: F2)">
+        <!--<GroupBox Grid.RowSpan="3" Grid.Column="4" Margin="4 0 0 0" Width="600" Header="Hover Item Info (Locking: F2)">
             <RichTextBox Margin="2 4 2 2" x:Name="Info" IsReadOnly="True" Background="White" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
                 <RichTextBox.Resources>
                     <Style TargetType="Hyperlink">
@@ -52,6 +54,6 @@
                     </Style>
                 </RichTextBox.Resources>
             </RichTextBox>
-        </GroupBox>
+        </GroupBox>-->
     </Grid>
 </Window>
