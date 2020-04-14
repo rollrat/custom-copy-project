@@ -39,6 +39,7 @@ namespace CustomCrawler
     {
         ChromiumWebBrowser browser;
         CallbackCCW cbccw;
+        static bool opened = false;
 
         public CustomCrawlerDynamics()
         {
@@ -55,6 +56,14 @@ namespace CustomCrawler
             Closed += CustomCrawlerDynamics_Closed;
 
             KeyDown += CustomCrawlerDynamics_KeyDown;
+
+            if (opened)
+            {
+                Close();
+                return;
+            }
+
+            opened = true;
         }
 
         private void CustomCrawlerDynamics_KeyDown(object sender, KeyEventArgs e)
@@ -118,52 +127,41 @@ namespace CustomCrawler
                 Application.Current.Dispatcher.BeginInvoke(new Action(
                 delegate
                 {
-                    try
+                    instance.browser.GetMainFrame().EvaluateScriptAsync($"document.querySelector('[{before}]').style.border = '{before_border}';").Wait();
+                    before = $"ccw_tag={elem}";
+                    before_border = instance.browser.GetMainFrame().EvaluateScriptAsync($"document.querySelector('[{before}]').style.border").Result.Result.ToString();
+                    instance.browser.GetMainFrame().EvaluateScriptAsync($"document.querySelector('[{before}]').style.border = '0.2em solid red';").Wait();
+
+                    if (instance.stacks.ContainsKey(elem))
                     {
-                        instance.browser.GetMainFrame().EvaluateScriptAsync($"document.querySelector('[{before}]').style.border = '{before_border}';").Wait();
-                        before = $"ccw_tag={elem}";
-                        before_border = instance.browser.GetMainFrame().EvaluateScriptAsync($"document.querySelector('[{before}]').style.border").Result.Result.ToString();
-                        instance.browser.GetMainFrame().EvaluateScriptAsync($"document.querySelector('[{before}]').style.border = '0.2em solid red';").Wait();
+                        var stack = instance.stacks[elem];
+                        var builder = new StringBuilder();
 
-                        if (instance.stacks.ContainsKey(elem))
+                        while (stack != null)
                         {
-                            var stack = instance.stacks[elem];
-                            var builder = new StringBuilder();
+                            if (!string.IsNullOrEmpty(stack.Description))
+                                builder.Append("Description: " + stack.Description + "\r\n");
 
-                        NEXT:
+                            foreach (var frame in stack.CallFrames)
                             {
-                                if (!string.IsNullOrEmpty(stack.Description))
-                                    builder.Append("Description: " + stack.Description + "\r\n");
+                                if (ignore_js(frame.Url))
+                                    continue;
+                                //if (!frame.Url.Contains("comment"))
+                                //    continue;
+                                builder.Append($"{frame.Url}:<{frame.FunctionName}>:{frame.LineNumber + 1}:{frame.ColumnNumber + 1}\r\n");
 
-                                foreach (var frame in stack.CallFrames)
-                                {
-                                    if (ignore_js(frame.Url))
-                                        continue;
-                                    //if (!frame.Url.Contains("comment"))
-                                    //    continue;
-                                    builder.Append($"{frame.Url}:<{frame.FunctionName}>:{frame.LineNumber + 1}:{frame.ColumnNumber + 1}\r\n");
-
-                                    // Currently not support html built-in script
-                                    JsManager.Instance.FindByLocation(frame.Url, (int)frame.LineNumber + 1, (int)frame.ColumnNumber + 1);
-                                }
-
-                                if (stack.Parent != null)
-                                {
-                                    stack = stack.Parent;
-                                    goto NEXT;
-                                }
+                                // Currently not support html built-in script
+                                JsManager.Instance.FindByLocation(frame.Url, (int)frame.LineNumber + 1, (int)frame.ColumnNumber + 1);
                             }
 
-                            instance.Info.Text = builder.ToString();
+                            stack = stack.Parent;
                         }
-                        else
-                        {
-                            instance.Info.Text = "Static Node";
-                        }
+
+                        instance.Info.Text = builder.ToString();
                     }
-                    catch (Exception e)
+                    else
                     {
-                        ;
+                        instance.Info.Text = "Static Node";
                     }
                 }));
             }
@@ -178,56 +176,57 @@ namespace CustomCrawler
         Dictionary<string, StackTrace> stacks = new Dictionary<string, StackTrace>();
         private async Task find_source(Node nn)
         {
-            //if (nn.Children != null)
+            _ = Application.Current.Dispatcher.BeginInvoke(new Action(
+            delegate
             {
-                _ = Application.Current.Dispatcher.BeginInvoke(new Action(
-                delegate
+                URLText.Text = nn.NodeId.ToString();
+            }));
+            var st = await ss.SendAsync(new GetNodeStackTracesCommand { NodeId = nn.NodeId });
+            if (st.Result != null && st.Result.Creation != null)
+            {
+                stacks.Add("ccw_" + nn.NodeId, st.Result.Creation);
+            }
+            if (nn.NodeType == 1)
+            {
+                await ss.SendAsync(new SetAttributeValueCommand
                 {
-                    URLText.Text = nn.NodeId.ToString();
-                }));
-                var st = await ss.SendAsync(new GetNodeStackTracesCommand { NodeId = nn.NodeId });
-                if (st.Result != null && st.Result.Creation != null)
+                    NodeId = nn.NodeId,
+                    Name = "ccw_tag",
+                    Value = "ccw_" + nn.NodeId
+                });
+                await ss.SendAsync(new SetAttributeValueCommand
                 {
-                    stacks.Add("ccw_" + nn.NodeId, st.Result.Creation);
-                }
-                if (nn.NodeType == 1)
+                    NodeId = nn.NodeId,
+                    Name = "onmouseenter",
+                    Value = $"ccw.hoverelem('ccw_{nn.NodeId}')"
+                });
+                await ss.SendAsync(new SetAttributeValueCommand
                 {
-                    await ss.SendAsync(new SetAttributeValueCommand
-                    {
-                        NodeId = nn.NodeId,
-                        Name = "ccw_tag",
-                        Value = "ccw_" + nn.NodeId
-                    });
-                    await ss.SendAsync(new SetAttributeValueCommand
-                    {
-                        NodeId = nn.NodeId,
-                        Name = "onmouseenter",
-                        Value = $"ccw.hoverelem('ccw_{nn.NodeId}')"
-                    });
-                    await ss.SendAsync(new SetAttributeValueCommand
-                    {
-                        NodeId = nn.NodeId,
-                        Name = "onmouseleave",
-                        Value = $"ccw.hoverelem('ccw_{nn.NodeId}')"
-                    });
-                }
-                if (nn.Children != null)
+                    NodeId = nn.NodeId,
+                    Name = "onmouseleave",
+                    Value = $"ccw.hoverelem('ccw_{nn.NodeId}')"
+                });
+            }
+            if (nn.Children != null)
+            {
+                foreach (var child in nn.Children)
                 {
-                    foreach (var child in nn.Children)
-                    {
-                        await find_source(child);
-                    }
+                    await find_source(child);
                 }
             }
         }
 
         private void CustomCrawlerDynamics_Closed(object sender, EventArgs e)
         {
-           ChromeDevTools.Dispose();
+            opened = false;
+            ChromeDevTools.Dispose();
+            if (child != null)
+                child.Close();
         }
 
         IChromeSession ss;
         bool init = false;
+        CustomCrawlerDynamicsRequest child;
         private async void Button_Click(object sender, RoutedEventArgs e)
         {
             if (!init)
@@ -235,9 +234,9 @@ namespace CustomCrawler
                 var token = new Random().Next();
                 browser.LoadHtml(token.ToString());
                 init = true;
-
+                
                 ss = await ChromeDevTools.Create();
-                new CustomCrawlerDynamicsRequest(ss).Show();
+                (child = new CustomCrawlerDynamicsRequest(ss)).Show();
             }
 
             browser.Load(URLText.Text);

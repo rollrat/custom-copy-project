@@ -27,14 +27,9 @@ namespace CustomCrawler.chrome_devtools
         }
 
         static IChromeProcess icp;
-        static bool init = false;
-        const int ViewPortWidth = 1440;
-        const int ViewPortHeight = 900;
 
         public static async Task<IChromeSession> Create()
         {
-            if (init) return null;
-            init = true;
             var chromeProcessFactory = new CefFactory();
             icp = chromeProcessFactory.Create(Port, true);
 
