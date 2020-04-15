@@ -24,10 +24,9 @@ Unfortunately, this tool is currently only supported on Windows.
 
 ### What is `Custom Crawler`?
 
-`Custom Crawler` is `static` web analysis tools for Custom Copy Project.
-With this tool, you can write crawlers many times more efficiently than using other browsers.
+This project is now managed in a new repository.
 
-Currently, the `static` web analyzer is almost complete, and we are preparing to build a `dynamic` web analyzer.
+https://github.com/rollrat/custom-crawler
 
 ## Libraries
 
